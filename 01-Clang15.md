@@ -87,94 +87,79 @@ sudo apt install mingw-w64
 
 ### 2.1 初始源代码
 
-有三种获取初始源代码的方式 - 其中第二种方式（从清华获取）作为目前主要方式。
+有2种获取初始源代码的方式 - 其中第二种方式（从清华+github获取）作为目前主要方式。
 
-任何人需要初始源代码，只要执行2.1.1 ~ 2.1.3中的**任何一个步骤**即可！！！
-
-
-
- <span style="color:red">如果是在已有正确测试的环境下重新执行代码打补丁、测试，则本步骤不需要做，但是需要做附录A.1 中的步骤！！！</span>
-
-<span style="color:green">如果是仅仅重新测试（代码不变），则直接进入2.2节！</span>
+任何人需要初始源代码，只要执行2.1.1 ~ 2.1.2中的**任何一个步骤**即可！！！
 
 
 
-#### 2.1.1 【内部】直接解压文件
+#### 2.1.1 【熵核内部】直接解压文件
 
 ```bash
-## 将 /back/comm_back/1-android/clang-15.0.3-android.src.qh.orig.xz 解压到$ATOOLCHAIN_WS
+## 将 /back/comm_back/1-android/clang15/clang_la-android.src.tar 解压到$ATOOLCHAIN_WS
 cd $ATOOLCHAIN_WS
-tar xfJ /back/comm_back/1-android/clang15/clang-15.0.3-android.src.qh.orig.xz
+tar xf /back/comm_back/1-android/clang15/clang_la-android.src.tar
 
-cd clang-15.0.3
+cd clang_la
 repo sync -l -c  ## 一定要做这个步骤
 ```
 
 
 
-#### 2.1.2 下载源码（清华）
+#### 2.1.2 下载源码（清华 + github）
 
 ```bash
 ## Clang15 toolchain source fold
-cd $ATOOLCHAIN_WS/clang-15.0.3
+cd $ATOOLCHAIN_WS/clang-la
 
 ## initialize repo
-## 一定要确认python版本的正确性
-repo init -u https://mirrors.tuna.tsinghua.edu.cn/git/AOSP/platform/manifest -b llvm-toolchain
+## 一定要确认python版本的正确性!!
+## 此处需要输入密码！！
+## 【目前https不好用？】 repo init -u https://github.com/android-la64/manifest.git -b clang-r468909b
+repo init -u git@github.com:android-la64/manifest.git -b clang-r468909b
 
-## copy manifest file for Clang 15.0.3
-cp ../aosp12-clang15-patch/manifests/manifest_9146769.xml ./.repo/manifests/
 
-## re-initialize repo
-repo init -m manifest_9146769.xml
-
-## synchronize repo
+## synchronize repo: 如果采用ssh方式，此处也是要输入密码
 repo sync -c
 ```
 
-
-
-#### 2.1.3【内部/外部】下载源代码 - LoongArch
-
-
+Tips（如果需要）:
 
 ```bash
-## 待添加
+## 如果在sync过程中要求输入密码，请参考这里，采用PAT认证方式
+## Refer: https://stackoverflow.com/questions/68775869/message-support-for-password-authentication-was-removed
+
+
+```
+
+Tips2 - 提交代码：必须在本地切换为`a12_larch`分支。
+
+```bash
+[^_^llvm-project]$ git br
+* (no branch)
+
+
+(/data1/wendong/loongson/clang_la/toolchain/llvm-project @ xcvm 12:47:28)
+[^_^llvm-project]$ git br -r
+  android-la64/a12_larch
+  m/clang-r468909b -> android-la64/a12_larch
+(/data1/wendong/loongson/clang_la/toolchain/llvm-project @ xcvm 12:47:30)
 ```
 
 
 
 
 
-### 2.2 代码打补丁
-
-下述步骤只是临时方式，当代码都提交到thead上之后，只有`repo sync`就可以了，不需要这里描述的打补丁步骤！！
+### 2.2 NDK
 
 
 
+#### 2.2.1 替换NDK23
 
-
-#### 2.2.2 替换NDK23
-
-由于Clang15.0.3自带的NDK是r24，需要替换为r23版本。
+待补充！
 
 ```bash
-cd $ATOOLCHAIN_WS/clang-15.0.3
 
-tar xfJ ../aosp12-clang15-patch/clang-15.0.3/ndk_r23.xz
-```
-
-
-
-#### 2.2.3 替换Bionic
-
-<span style="color:red">注意</span>： 因为aosp中采用了clang12.0.3中一致的bionic，但是clang15.0.3中的bioinc是更新的版本，为了减少bionic更多对aosp的影响，我们在clang15中必须采用平头哥Clang12中自带的bioinc。
-
-```bash
-cd $ATOOLCHAIN_WS/clang-15.0.3
-mv bionic bionic-ori
-
-tar Jxf ../aosp12-clang15-patch/bionic.xz
 ```
 
 
