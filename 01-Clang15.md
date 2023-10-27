@@ -15,7 +15,7 @@ mkdir toolchain_ws
 ## export 本目录 为 ATOOLCHAIN_WS
 
 ## Clang15 fold
-mkdir -p $ATOOLCHAIN_WS/clang-15.0.3
+mkdir -p $ATOOLCHAIN_WS/clang_la
 
 ## ndk fold
 mkdir -p $ATOOLCHAIN_WS/ndk23
@@ -26,8 +26,8 @@ mkdir -p $ATOOLCHAIN_WS/ndk23
 ```bash
 ## 以下几行需要设置为环境变量
 export ATOOLCHAIN_WS=xxx/toolchain_ws
-#export OUT_DIR=out.rv
-export CLANG_OUT=$ATOOLCHAIN_WS/clang-15.0.3/out
+export CLANG_OUT=$ATOOLCHAIN_WS/clang_la/out   ## 第四章的测试会用到
+
 export XZ_DEFAULTS="-T 0"  ## Only for xz compress
 ```
 
@@ -77,6 +77,7 @@ sudo apt install libncurses5 python3-distutils file
 
 ## 如果需要编译Windows版本的clang，必须按照
 sudo apt install mingw-w64
+
 ```
 
 
@@ -109,28 +110,23 @@ repo sync -l -c  ## 一定要做这个步骤
 #### 2.1.2 下载源码（清华 + github）
 
 ```bash
+##!! 必须先设置好ssh
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_rsa  ## 后面的文件只是一个例子，个人需要换成自己在github上的id
+# 注意上述命令需要输入密码！
+
 ## Clang15 toolchain source fold
-cd $ATOOLCHAIN_WS/clang-la
+cd $ATOOLCHAIN_WS/clang_la
 
 ## initialize repo
 ## 一定要确认python版本的正确性!!
-## 此处需要输入密码！！
-## 【目前https不好用？】 repo init -u https://github.com/android-la64/manifest.git -b clang-r468909b
 repo init -u git@github.com:android-la64/manifest.git -b clang-r468909b
 
-
-## synchronize repo: 如果采用ssh方式，此处也是要输入密码
+## synchronize repo
 repo sync -c
 ```
 
-Tips（如果需要）:
 
-```bash
-## 如果在sync过程中要求输入密码，请参考这里，采用PAT认证方式
-## Refer: https://stackoverflow.com/questions/68775869/message-support-for-password-authentication-was-removed
-
-
-```
 
 Tips2 - 提交代码：必须在本地切换为`a12_larch`分支。
 
@@ -138,31 +134,25 @@ Tips2 - 提交代码：必须在本地切换为`a12_larch`分支。
 [^_^llvm-project]$ git br
 * (no branch)
 
-
 (/data1/wendong/loongson/clang_la/toolchain/llvm-project @ xcvm 12:47:28)
 [^_^llvm-project]$ git br -r
   android-la64/a12_larch
   m/clang-r468909b -> android-la64/a12_larch
-(/data1/wendong/loongson/clang_la/toolchain/llvm-project @ xcvm 12:47:30)
+
 ```
-
-
 
 
 
 ### 2.2 NDK
 
-
-
-#### 2.2.1 替换NDK23
-
-待补充！
+采用NDK的最新代码 :
 
 ```bash
-
+$ cd toolchain/prebuilts/ndk/r23/
+$ git remote -v
+android-la64	ssh://git@github.com/android-la64/prebuilts-ndk-r23 (fetch)
+android-la64	ssh://git@github.com/android-la64/prebuilts-ndk-r23 (push)
 ```
-
-
 
 
 
