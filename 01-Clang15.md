@@ -11,22 +11,22 @@
 ```bash
 ## Workspace
 mkdir xxx; cd xxx ## xxx为自行设置的目录
-mkdir toolchain_ws
-## export 本目录 为 ATOOLCHAIN_WS
+mkdir loongson
+## export 本目录 为 LA_WS
 
 ## Clang15 fold
-mkdir -p $ATOOLCHAIN_WS/clang_la
+mkdir -p $LA_WS/clang_la
 
 ## ndk fold
-mkdir -p $ATOOLCHAIN_WS/ndk23
+mkdir -p $LA_WS/ndk23
 ```
 
-设置环境变量（建议设置到 `.bashrc`中， 或者`$ATOOLCHAIN_WS`目录下的`myenv.sh`中）
+设置环境变量（建议设置到 `.bashrc`中， 或者`$LA_WS`目录下的`myenv.sh`中）
 
 ```bash
 ## 以下几行需要设置为环境变量
-export ATOOLCHAIN_WS=xxx/toolchain_ws
-export CLANG_OUT=$ATOOLCHAIN_WS/clang_la/out   ## 第四章的测试会用到
+export LA_WS=xxx/loongson
+export CLANG_OUT=$LA_WS/clang_la/out   ## 第四章的测试会用到
 
 export XZ_DEFAULTS="-T 0"  ## Only for xz compress
 ```
@@ -37,7 +37,7 @@ export XZ_DEFAULTS="-T 0"  ## Only for xz compress
 
 ```bash
 ## clone repo
-cd $ATOOLCHAIN_WS
+cd $LA_WS
 git clone https://mirrors.tuna.tsinghua.edu.cn/git/git-repo
 
 ## create a directory to hold repo executable
@@ -46,7 +46,7 @@ mkdir ~/.bin
 export PATH=$HOME/.bin:$PATH   ## $HOME/.bin MUST be the first one
 
 ## link repo
-ln -s $ATOOLCHAIN_WS/git-repo/repo ~/.bin/repo
+ln -s $LA_WS/git-repo/repo ~/.bin/repo
 export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'
 
 ## link `python` to `python3` ONLY for you
@@ -86,19 +86,17 @@ sudo apt install mingw-w64
 
 
 
-### 2.1 初始源代码
-
 有2种获取初始源代码的方式 - 其中第二种方式（从清华+github获取）作为目前主要方式。
 
 任何人需要初始源代码，只要执行2.1.1 ~ 2.1.2中的**任何一个步骤**即可！！！
 
 
 
-#### 2.1.1 【熵核内部】直接解压文件
+### 2.1 【熵核内部】直接解压文件
 
 ```bash
 ## 将 /back/comm_back/1-android/clang15/clang_la-android.src.tar 解压到$ATOOLCHAIN_WS
-cd $ATOOLCHAIN_WS
+cd $LA_WS
 tar xf /back/comm_back/1-android/clang15/clang_la-android.src.tar
 
 cd clang_la
@@ -107,7 +105,7 @@ repo sync -l -c  ## 一定要做这个步骤
 
 
 
-#### 2.1.2 下载源码（清华 + github）
+### 2.2 下载源码（清华 + github）
 
 ```bash
 ##!! 必须先设置好ssh
@@ -116,7 +114,7 @@ ssh-add ~/.ssh/id_rsa  ## 后面的文件只是一个例子，个人需要换成
 # 注意上述命令需要输入密码！
 
 ## Clang15 toolchain source fold
-cd $ATOOLCHAIN_WS/clang_la
+cd $LA_WS/clang_la
 
 ## initialize repo
 ## 一定要确认python版本的正确性!!
@@ -126,9 +124,7 @@ repo init -u git@github.com:android-la64/manifest.git -b clang-r468909b
 repo sync -c
 ```
 
-
-
-Tips2 - 提交代码：必须在本地切换为`a12_larch`分支。
+Tips - 提交代码：必须在本地切换为`a12_larch`分支。
 
 ```bash
 [^_^llvm-project]$ git br
@@ -138,43 +134,26 @@ Tips2 - 提交代码：必须在本地切换为`a12_larch`分支。
 [^_^llvm-project]$ git br -r
   android-la64/a12_larch
   m/clang-r468909b -> android-la64/a12_larch
-
-```
-
-
-
-### 2.2 NDK
-
-采用NDK的最新代码 :
-
-```bash
-$ cd toolchain/prebuilts/ndk/r23/
-$ git remote -v
-android-la64	ssh://git@github.com/android-la64/prebuilts-ndk-r23 (fetch)
-android-la64	ssh://git@github.com/android-la64/prebuilts-ndk-r23 (push)
+  
 ```
 
 
 
 # 3. Clang15 编译与回归测试
 
-## 3.1 编译Linux和Windows版本
+## 3.1 编译Linux版本
 
 使用Python3脚本build.py编译源代码，添加选项--no-build lldb跳过lldb的编译。按如下步骤编译源代码：
 
 ```bash
-cd $ATOOLCHAIN_WS/clang-15.0.3
+cd $LA_WS/clang_la
 
 ## 编译整个Clang工具链，不编译lldb
 ## 在服务器上约70分钟，内存使用不太多。64核，< 20G内存
 ##
-python toolchain/llvm_android/build.py --lto --pgo --bolt --no-build lldb  --build-name r468909b
-
-## 如果是仅仅需要linux版本，可以简化为
 python toolchain/llvm_android/build.py --lto --pgo --bolt --no-build windows,lldb  --build-name r468909b
+
 ```
-
-
 
 上述编译也进行了部分回归测试（参考第三章），如下：
 
@@ -228,17 +207,7 @@ def test(self) -> None:
 
 
 
-## 3.2 编译macOS版本
-
-```bash
-cd $ATOOLCHAIN_WS/clang-15.0.3
-
-python toolchain/llvm_android/build.py --lto --pgo --no-build windows,lldb --build-name r468909b
-```
-
-
-
-## 3.3 打包
+## 3.2 打包
 
 编译完成后，Linux对应的安装文件位于`$OUT_DIR/install/linux-x86`。按如下步骤打包：
 
@@ -249,23 +218,13 @@ cd $CLANG_OUT/install/linux-x86
 # 打包生成的Linux版本的编译器，这个xz包可以给到aosp那边使用
 tar cfJ ../../../clang15.0.3-linux.bin.xz clang-r468909b
 
-cd $CLANG_OUT/install/windows-x86
-
-# 打包生成的Windows版本的编译器，这个xz包可以给到aosp那边使用
-tar cfJ ../../../clang15.0.3-windows.bin.xz clang-r468909b
-
-cd $CLANG_OUT/install/darwin-x86
-
-# 打包生成的macOS版本的编译器，这个xz包可以给到aosp那边使用
-tar cfJ ../../../clang15.0.3-darwin.bin.xz clang-r468909b
-
 # done. go back to previous working directory
 cd -
 ```
 
 
 
-# 4. Clang15 单元测试
+# 4. Clang15 单元测试 -TODO
 
 Clang的测试分为三类：
 
@@ -728,7 +687,7 @@ Testing Time: 47.84s
 
 
 
-# 5. Clang15 测试集测试
+# 5. Clang15 测试集测试 - TODO
 
 LLVM测试集即LLVM test-suite，源代码独立于llvm-project外，代码仓库位于：https://github.com/llvm/llvm-test-suite
 
@@ -956,64 +915,50 @@ $ ninja check   ## 大概10-15分钟
 
 ```bash
 ## create a directory for building NDK
-cd $ATOOLCHAIN_WS
+$ cd $LA_WS
 
-# tar xfJ /back/comm_back/1-android/clang15/ndk-r23.src.github.xz
-tar xf /back/comm_back/1-android/clang15/ndk-r23.src.github.tar
+# This command will extract all files to ndk23/
+$ tar xfJ /back/comm_back/1-android/loongarch/ndk23.src.la.xz
 
 ## checkout code MUST add '-l'
-cd ndk23
-repo sync -l -c
+$ cd ndk23
+$ repo sync -l -c
+
+## !!! 特别注意，最后要再次sync为最新代码 -- 此时只会从github上下载代码，理论上可以不翻墙
+$ repo sync
 ```
 
 
 
-#### 6.1.2 【外部】 -  从github下载源代码
+#### 6.1.2 从github下载源代码
 
 ```bash
 ## create a directory for building NDK
-cd $ATOOLCHAIN_WS
-mkdir ndk23 && cd ndk23
+$ cd $LA_WS
+$ mkdir ndk23 && cd ndk23
 
 ## initialize repo
-repo init -u https://github.com/riscv-android-src/manifest.git -b riscv-ndk-release-r23
+$ repo init -u git@github.com:android-la64/manifest.git -b ndk-r23-larch
 
 ## synchronize repo
-repo sync -c
+$ repo sync -c
 ```
 
 
 
 ### 6.2 编译前设置
 
-#### 6.2.1 打补丁
-
-```bash
-cd $ATOOLCHAIN_WS/ndk23
-
-bash $ATOOLCHAIN_WS/aosp12-clang15-patch/apply_patch.sh $ATOOLCHAIN_WS/aosp12-clang15-patch/ndk-r23/patches
-```
-
-
-
 #### 6.2.2  切换Clang到新编译的15.0.3
 
-##### 6.2.2.1 Linux 和 Windows
 ```bash
-## 在6.2.1节的补丁中，我们已经将 ndk/ndk/toolchains.py 中的 CLANG_VERSION 修订为15.0.3了
-
 ## Linux
-cd $ATOOLCHAIN_WS/ndk23/prebuilts/clang/host/linux-x86
+cd $LA_WS/ndk23/prebuilts/clang/host/linux-x86
 ln -s ../../../../../clang-15.0.3/out/install/linux-x86/clang-r468909b  clang-r468909b  ##!!
 ## ！！此处一定不能使用绝对路径进行ln -s操作，否则会导致编译失败！！
 ## 只有使用相对路径ln，或者直接copy
 
-## Windows
-cd $ATOOLCHAIN_WS/ndk23/prebuilts/clang/host/windows-x86
-ln -s ../../../../../clang-15.0.3/out/install/windows-x86/clang-r468909b clang-r468909b
-
 ## fix symbol links for builind NDK tests
-cd $ATOOLCHAIN_WS/ndk23/prebuilts/clang/host/linux-x86/clang-r468909b/lib/x86_64-unknown-linux-gnu
+cd $LA_WS/ndk23/prebuilts/clang/host/linux-x86/clang-r468909b/lib/x86_64-unknown-linux-gnu
 ln -s libc++.so.1 libc++.so.1.0
 ln -s libc++abi.so.1 libc++abi.so
 ln -s libc++abi.so.1 libc++abi.so.1.0
@@ -1021,75 +966,38 @@ ln -s libc++abi.so.1 libc++abi.so.1.0
 
 
 
-##### 6.2.2.2 macOS
-
-首先将3.3节打包的clang15.0.3-linux.bin.xz从Linux机器拷贝到Mac机器
-
-```bash
-cd $ATOOLCHAIN_WS
-tar Jxf clang15.0.3-linux.bin.xz
-
-cd $ATOOLCHAIN_WS/ndk23/prebuilts/clang/host/linux-x86
-ln -s $ATOOLCHAIN_WS/clang-r468909b clang-r468909b
-
-cd $ATOOLCHAIN_WS/ndk23/prebuilts/clang/host/darwin-x86
-mv clang-r468909b clang-r468909b-ori
-ln -s $CLANG_OUT/install/darwin-x86/clang-r468909b clang-r468909b
-
-cd $ATOOLCHAIN_WS/ndk23/prebuilts/clang/host/windows-x86
-ln -s $ATOOLCHAIN_WS/ndk23/prebuilts/clang/host/darwin-x86/clang-r468909b-ori clang-r468909b
-```
-
-
-
 #### 6.2.3 切换Python到Clang 15.0.3中的Python3
 
 ```bash
-cd $ATOOLCHAIN_WS/ndk23/prebuilts
-mv python3 python3-ori
-ln -s $ATOOLCHAIN_WS/clang-15.0.3/prebuilts/python python3
+cd $LA_WS/ndk23/prebuilts
+mv python3 python3-ori  ## Due to this file too OLD
+ln -s $LA_WS/clang-15.0.3/prebuilts/python python3
 cd python3
 ln -s linux-x86 linux
 
-cd $ATOOLCHAIN_WS/ndk23
+cd $LA_WS/ndk23
 ```
 
 以上命令可以copy到一个脚本文件中，用source的方式执行。
 
 
 
-#### 6.2.4 bionic
-
-将 `bionic`切换为最新版本
-
-```bash
-cd $ATOOLCHAIN_WS/ndk23
-mv bionic bionic-ori
-
-tar Jxf $ATOOLCHAIN_WS/aosp12-clang15-patch/bionic.xz
-```
-
-
-
 ### 6.3 编译、打包以及测试
 
+其中本部分的测试需要进一步修订
+
 ```bash
-cd $ATOOLCHAIN_WS/ndk23
+cd $LA_WS/ndk23
 
 ## 编译Linux版本
 unset OUT_DIR
-python ndk/checkbuild.py -jxx --package --build-number 23      ## 根据机器的性能确定xx数字：2,8,16等
+
+## 根据机器的性能确定xx数字：2,8,16等
+python ndk/checkbuild.py -j2  --package  --no-build-tests  --system linux --build-number 23
+# python ndk/checkbuild.py -j2 --package --system linux --build-number 23
 
 
-## 编译Windows版本
-python ndk/checkbuild.py -jxx --package --build-number 23 --system windows64
-
-
-## 编译macOS版本
-python ndk/checkbuild.py -jxx --package --build-number 23
-
-
-## 结果应该显示
+## 结果应该显示 -- TODO
 build: PASS 892/1000     FAIL 0/1000  SKIP 108/1000
 device: PASS 330/355     FAIL 0/355   SKIP 25/355
 libc++: PASS 31380/31380 FAIL 0/31380 SKIP 0/31380
@@ -1098,13 +1006,11 @@ PASS 32602/32735         FAIL 0/32735 SKIP 133/32735
 
 打包后的NDK文件
 - Linux：`out.rv/dist/android-ndk-r23-linux-x86_64.zip`
-- Windows：`out.rv/dist/android-ndk-r23-windows-x86_64.zip`
-- macOS：`out.rv/dist/android-ndk-r23-darwin-x86_64.zip`，`android-ndk-r23-app-bundle.zip`
 
 
 
 
-### 6.4 Device上测试
+### 6.4 Device上测试 - TODO
 
 NDK 测试作为NDK正常构建的一部分（使用 checkbuild.py）并通过 run_tests.py 运行。
 
@@ -1126,29 +1032,9 @@ cp $ATOOLCHAIN_WS/aosp12-clang15-patch/ndk-r23/qa_config_thead.json .
 
 unset OUT_DIR
 python ../ndk/run_tests.py --abi riscv64 --clean-device --config qa_config_thead.json | tee test_log.txt
+
+
 ```
-
-
-
-#### 6.4.1 Device运行结果（20230819）
-
-```bash
-## check output
-grep PASS test_log.txt
-# PASS 5296/5304         FAIL 7/5304 SKIP 1/5304
-# libc++: PASS 5202/5206 FAIL 3/5206 SKIP 1/5206
-# ndk-build: PASS 64/68  FAIL 4/68 SKIP 0/68
-# cmake: PASS 30/30      FAIL 0/30 SKIP 0/30
-
-- libc++ (3)
-  - libc++.std/localization/locale.categories/category.numeric/locale.nm.put/facet.num.put.members/put_long_double.pass.cpp
-  - libc++.std/input.output/file.streams/fstreams/filebuf.members/close.pass.cpp
-
-- ndk-build (1)
-  - test-cpufeatures.test_cpufeatures
-```
-
-
 
 
 
@@ -1163,7 +1049,7 @@ grep PASS test_log.txt
 这个步骤只是为了将跳过  <span style="color:red">2.1</span> 节的步骤 - 节省测试时间（不删除out.rv，节约编译时间）。
 
 ```bash
-$ cd $ATOOLCHAIN_WS/clang-15.0.3
+$ cd $ATOOLCHAIN_WS/clang_la
 $ rm -rf bionic*
 
 ## 恢复到2.1节之后的初始状态
@@ -1198,18 +1084,6 @@ repo sync -l -c
 
 ## 之后就可以从6.2节开始
 ```
-
-
-
-### A.3 lit测试介绍
-
-Clang的lit测试，其实就是运行如下的命令（个人环境）：
-
-```
-../../prebuilts/python/linux-x86/bin/python3.10 ./bin/llvm-lit -sv --param USE_Z3_SOLVER=0  ../../out.rv/llvm-project/libcxx/test/std/input.output/filesystems/fs.op.funcs/fs.op.exists
-```
-
-所以，最后的目录可以任意子目录，这样可以较大程度的缩小运行的测试用例。
 
 
 
