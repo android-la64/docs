@@ -160,30 +160,30 @@ python toolchain/llvm_android/build.py --lto --pgo --bolt --no-build windows,lld
 ```bash
 [0/955] Running libcxx tests
 Testing Time: 856.03s
-  Unsupported      :  306
-  Passed           : 7262
+  Unsupported      :  304
+  Passed           : 7282
   Expectedly Failed:   41
 
 [952/955] Running clang_tools regression tests
 Testing Time: 24.63s
   Unsupported      :    7
-  Passed           : 2498
+  Passed           : 2506
   Expectedly Failed:    2
 
 
 [953/955] Running the Clang regression tests
 Testing Time: 95.58s
   Skipped          :    33
-  Unsupported      :   555
-  Passed           : 30622
+  Unsupported      :   551
+  Passed           : 30479
   Expectedly Failed:    26
 
 [954/955] Running the LLVM regression tests
 Testing Time: 70.62s
   Skipped          :    11
-  Unsupported      : 12613
-  Passed           : 37005
-  Expectedly Failed:    80
+  Unsupported      : 12530
+  Passed           : 36592
+  Expectedly Failed:    64
 ```
 
 从脚本`builders.py`中可以看到，回归测试其实就是执行了如下脚本
@@ -207,6 +207,41 @@ def test(self) -> None:
 
 
 
+#### 3.1.1 特别注意
+
+我们当前暂时禁用了部分Clang模块的编译，这部分需要龙芯继续，最终版本还是需要这些模块。
+
+```diff
+diff --git a/do_build.py b/do_build.py
+index 3ede79b..3c8bbff 100755
+--- a/do_build.py
++++ b/do_build.py
+@@ -172,20 +172,20 @@ def build_runtimes(build_lldb_server: bool):
+     builders.BuiltinsBuilder().build()
+     builders.LibUnwindBuilder().build()
+     builders.PlatformLibcxxAbiBuilder().build()
+-    builders.CompilerRTBuilder().build()
+-    builders.TsanBuilder().build()
++    # builders.CompilerRTBuilder().build()
++    # builders.TsanBuilder().build()
+     # Build musl runtimes and 32-bit glibc for Linux
+     if hosts.build_host().is_linux:
+         builders.CompilerRTHostI386Builder().build()
+         add_lib_links('stage2')
+         builders.MuslHostRuntimeBuilder().build()
+-    builders.LibOMPBuilder().build()
++    # builders.LibOMPBuilder().build()
+     if build_lldb_server:
+         builders.LldbServerBuilder().build()
+     # Bug: http://b/64037266. `strtod_l` is missing in NDK r15. This will break
+     # libcxx build.
+     # build_libcxx(toolchain, version)
+-    builders.SanitizerMapFileBuilder().build()
++    # builders.SanitizerMapFileBuilder().build()
+```
+
+
+
 ## 3.2 打包
 
 编译完成后，Linux对应的安装文件位于`$OUT_DIR/install/linux-x86`。按如下步骤打包：
@@ -224,7 +259,7 @@ cd -
 
 
 
-# 4. Clang15 单元测试 -TODO
+# 4. Clang15 单元测试
 
 Clang的测试分为三类：
 
@@ -243,7 +278,7 @@ Clang的测试分为三类：
 以下操作以编译工作目录即 `$ATOOLCHAIN_WS/clang-15.0.3` 为初始目录，步骤如下：
 
 ```bash
-cd $ATOOLCHAIN_WS/clang-15.0.3
+cd $LA_WS/clang_la
 
 # copy libxml2 from stage2-install to stage2
 cp $CLANG_OUT/stage2-install/lib/libxml2* $CLANG_OUT/stage2/lib/
@@ -296,26 +331,14 @@ cd $CLANG_OUT/stage2
 ninja check-clang
 ```
 
-结果如下
+结果如下（Linux）:
 
-Linux:
 ```bash
 Testing Time: 191.67s
   Skipped          :    33
-  Unsupported      :   558
-  Passed           : 30656
-  Expectedly Failed:    27
-```
-
-
-
-macOS:
-
-```text
-  Skipped          :    34
-  Unsupported      :   542
-  Passed           : 30635
-  Expectedly Failed:    25
+  Unsupported      :   551
+  Passed           : 30479
+  Expectedly Failed:    26
 ```
 
 
@@ -329,34 +352,16 @@ macOS:
 ninja check-llvm
 ```
 
-结果如下
+结果如下（Linux）：
 
-Linux:
 ```
 [0/1] Running the LLVM regression tests
 
 Testing Time: 80.34s
   Skipped          :    11
-  Unsupported      : 12657
-  Passed           : 37049
-  Expectedly Failed:    79
-```
-
-
-
-macOS(原始代码也是同样错误）:
-
-```text
-Failed Tests (1):
-  LLVM :: ExecutionEngine/JITLink/X86/MachO_x86-64_self_relocation_exec.test
-
-
-Testing Time: 438.31s
-  Skipped          :    11
-  Unsupported      : 12642
-  Passed           : 36970
-  Expectedly Failed:    84
-  Failed           :     1
+  Unsupported      : 12530
+  Passed           : 36592
+  Expectedly Failed:    64
 ```
 
 
@@ -374,11 +379,10 @@ $ ninja check-llvm-codegen
 
 ```bash
 [0/1] Running lit suite /data2/wendong/aclang_toolchain/clang-toolchain/clang-15.0.3/out/llvm-project/llvm/test/CodeGen
-
 Testing Time: 34.61s  
-  Unsupported      :  9433
-  Passed           : 11283
-  Expectedly Failed:    28
+  Unsupported      :  9354
+  Passed           : 10851
+  Expectedly Failed:    20
 ```
 
 
@@ -395,9 +399,10 @@ ninja check-lld
 测试完成后，得到如下报告：
 
 ```
-Testing Time: 15.24s
-  Unsupported:  440
-  Passed     : 2234
+Testing Time: 9.46s
+  Unsupported      :  440
+  Passed           : 2251
+  Expectedly Failed:    1
 ```
 
 
@@ -458,10 +463,10 @@ ninja check-llvm-tools
 ```
 [0/1] Running lit suite /data2/wendong/aclang_toolchain/clang-toolchain/clang-15.0.3/out/llvm-project/llvm/test/tools
 
-Testing Time: 17.18s
-  Unsupported      :  304
-  Passed           : 3205
-  Expectedly Failed:   11
+Testing Time: 6.62s
+  Unsupported      :  301
+  Passed           : 3211
+  Expectedly Failed:    5
 ```
 
 
@@ -516,26 +521,18 @@ Testing Time: 0.24s
 ninja check-cxx
 ```
 
-测试完成后，得到如下报告：
+测试完成后，得到如下报告（Linux）:
 
-Linux:
 ```bash
-Testing Time: 601.67s
-  Unsupported      :  303
-  Passed           : 7280
+Testing Time: 505.39s
+  Unsupported      :  304
+  Passed           : 7282
   Expectedly Failed:   41
 ```
 
-macOS:
-```text
-  Unsupported      :  245
-  Passed           : 7332
-  Expectedly Failed:   32
-```
 
 
-
-### 4.12 Clang_clang-cxx测试
+### 4.12 clang-cxx测试
 
 按以下步骤进行Clang_Cxx单元测试：
 
@@ -627,60 +624,21 @@ Testing Time: 2.24s
 ninja check-clang-tools
 ```
 
-测试完成后，得到如下报告：
+测试完成后，得到如下报告（Linux）:
 
-Linux:
 ```text
 Testing Time: 42.61s
   Unsupported      :    7
-  Passed           : 2503
+  Passed           : 2506
   Expectedly Failed:    2
 ```
 
-macOS(原始代码也是同样错误）:
-```text
-Failed Tests (3):
-  Clang Tools :: clang-tidy/checkers/performance/trivially-destructible.cpp
-  Extra Tools Unit Tests :: clang-change-namespace/./ClangChangeNamespaceTests/ChangeNamespaceTest/NamespaceAliasInAncestorNamespace
-  Extra Tools Unit Tests :: clang-change-namespace/./ClangChangeNamespaceTests/ChangeNamespaceTest/NamespaceAliasInOtherNamespace
 
 
-Testing Time: 47.84s
-  Unsupported      :    8
-  Passed           : 2495
-  Expectedly Failed:    2
-  Failed           :    3
-```
-
-
-
-### 4.16 RVV 0.7.1测试
-
-【暂无单独的测试用例】
-
-
-
-### 4.20 熵核标记的测试用例
-
-以下16个应用Clang 15.0.0 THEAD CPU 补丁后新增失败的测试用例被标记为 `Expectedly Failed`:
+### 4.20 新标记失败的测试用例
 
 ```bash
-- llvm/test/CodeGen/ARM/debug-info-sreg2.ll
-- llvm/test/CodeGen/RISCV/THEAD/bswap.ll
-- llvm/test/CodeGen/RISCV/THEAD/rvv0p7/vsetvli-insert-crossbb.ll
-- llvm/test/CodeGen/RISCV/THEAD/rvv0p7/vsetvli-insert.ll
-- llvm/test/CodeGen/RISCV/THEAD/thead-memcpy-expand.ll
-- llvm/test/CodeGen/RISCV/vararg-ilp32e.ll
-- llvm/test/CodeGen/RISCV/vararg.ll
-- llvm/test/CodeGen/X86/conditional-tailcall.ll
-- llvm/test/CodeGen/X86/licm-dominance.ll
-- llvm/test/CodeGen/X86/x86-repmov-copy-eflags.ll
-- llvm/test/DebugInfo/ARM/s-super-register.ll
-- llvm/test/tools/llvm-objdump/ELF/ARM/debug-vars-dwarf4-sections.s
-- llvm/test/tools/llvm-objdump/ELF/ARM/debug-vars-dwarf4.s
-- llvm/test/tools/llvm-objdump/ELF/ARM/debug-vars-dwarf5-sections.s
-- llvm/test/tools/llvm-objdump/ELF/ARM/debug-vars-dwarf5.s
-- llvm/test/tools/llvm-objdump/ELF/ARM/debug-vars-wide-chars.s
+
 ```
 
 
