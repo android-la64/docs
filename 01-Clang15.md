@@ -97,10 +97,13 @@ sudo apt install mingw-w64
 ```bash
 ## 将 /back/comm_back/1-android/clang15/clang_la-android.src.tar 解压到$ATOOLCHAIN_WS
 cd $LA_WS
-tar xf /back/comm_back/1-android/clang15/clang_la-android.src.tar
+tar xf /back/comm_back/1-android/loongarch/clang15.src.la.tar
 
 cd clang_la
 repo sync -l -c  ## 一定要做这个步骤
+
+## 从github上同步最新的代码 - 需要设置好ssh -- 参考2.2节的前两个命令
+repo sync -c
 ```
 
 
@@ -134,7 +137,6 @@ Tips - 提交代码：必须在本地切换为`a12_larch`分支。
 [^_^llvm-project]$ git br -r
   android-la64/a12_larch
   m/clang-r468909b -> android-la64/a12_larch
-  
 ```
 
 
@@ -151,7 +153,7 @@ cd $LA_WS/clang_la
 ## 编译整个Clang工具链，不编译lldb
 ## 在服务器上约70分钟，内存使用不太多。64核，< 20G内存
 ##
-python toolchain/llvm_android/build.py --lto --pgo --bolt --no-build windows,lldb  --build-name r468909b
+python toolchain/llvm_android/build.py --lto --pgo --bolt --no-build windows,lldb --build-name r468909b
 
 ```
 
@@ -645,7 +647,7 @@ Testing Time: 42.61s
 
 
 
-# 5. Clang15 测试集测试 - TODO
+# 5. Clang15 测试集测试 - TODO(这部分还没有准备好)
 
 LLVM测试集即LLVM test-suite，源代码独立于llvm-project外，代码仓库位于：https://github.com/llvm/llvm-test-suite
 
