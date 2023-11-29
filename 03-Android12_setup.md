@@ -121,11 +121,36 @@ cd -
 
 #### 1.5.3 Patch
 
-```bash
+部分模块本身太大无法上传，部分二进制文件为了绕过编译检查而伪造的，因此这些模块暂时使用patch方式提交修改。
 
+下面是以patch目录为`/data0/xxx/aosp-la64-patches`,aosp目录为`/data0/xxx/aosp.la64`为例介绍打patch的方法。
+
+手动打patch:
+
+```shell
+$ cd /data0/xxx/aosp-la64-patches
+
+# 查看哪些模块需要打patch
+$ cat repos.txt
+cts
+packages/modules/ArtPrebuilt
+prebuilts/clang/host/linux-x86
+prebuilts/runtime
+system/apex
+
+# 仅以cts为例
+cd /data0/xxx/aosp.la64/cts
+git apply /data0/xxx/aosp-la64-patches/cts.patch
 ```
 
+自动打patch:
 
+```bash
+$ cd /data0/xxx/aosp-la64-patches
+$ ./apply-patch.sh /data0/xxx/aosp.la64
+```
+
+***注意：apply-patch.sh会通过git命令清除历史patch，如果有修改，需先做好备份***
 
 # 2. 编译riscv64
 
