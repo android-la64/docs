@@ -119,7 +119,38 @@ cd -
 
 
 
-#### 1.5.3 Patch
+#### 1.5.3 设置Rust
+
+```shell
+## 以为本地的目录为例
+$ tree -L 1
+.
+├── aosp.la
+├── clang_la
+├── myenv.sh
+├── ndk23
+├── proxy.sh
+├── rust
+└── sync.github.sh
+
+$ cd aosp.la/prebuilts/rust/linux-x86
+
+## 备份老版本
+$ cp -r 1.51.0 1.51.0.bak
+
+## 安装rust
+tar Jxf ../../../../rust/build/dist/rust-dev-1.51.0-dev-x86_64-unknown-linux-gnu.tar.xz
+cd rust-dev-1.51.0-dev-x86_64-unknown-linux-gnu
+./install.sh --prefix=../1.51.0
+
+## 更新rust代码
+cp -r ../../../../rust/library/* 1.51.0/src/stdlibs/library/
+cp -r ../../../../rust/vendor/* 1.51.0/src/stdlibs/vendor/
+```
+
+
+
+#### 1.5.4 Patch
 
 部分模块本身太大无法上传，部分二进制文件为了绕过编译检查而用了假的（目前还编译不出来），因此这些模块暂时使用patch方式提交修改。
 
