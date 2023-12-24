@@ -95,26 +95,10 @@ $ ln -s ../../../../../clang_la/out/install/linux-x86/clang-r468909b ./clang-r46
 ```bash
 ## 以下命令可以拷贝到一个shell脚本中执行
 $ cd prebuilts/clang/host/linux-x86/clang-r468909b/lib64/clang/15.0.3/lib/linux/
-touch libclang_rt.profile-loongarch64-android.a libclang_rt.scudo_minimal-loongarch64-android.a 
-touch  libclang_rt.fuzzer-loongarch64-android.a libclang_rt.scudo-loongarch64-android.a
-touch libclang_rt.ubsan_minimal-loongarch64-android.a libclang_rt.ubsan_standalone-loongarch64-android.a
 
-touch libclang_rt.ubsan_standalone-x86_64-android.a libclang_rt.ubsan_minimal-x86_64-android.a
-touch libclang_rt.ubsan_minimal-i686-android.a libclang_rt.ubsan_standalone-i686-android.a
-
-touch libclang_rt.ubsan_standalone-x86_64-android.so libclang_rt.asan-x86_64-android.so
-touch libclang_rt.ubsan_standalone-i686-android.so
-
-touch libclang_rt.scudo-loongarch64-android.so libclang_rt.hwasan-loongarch64-android.so 
-touch libclang_rt.ubsan_standalone-loongarch64-android.so libclang_rt.asan-loongarch64-android.so
-touch libclang_rt.scudo_minimal-loongarch64-android.so
+touch libclang_rt.hwasan-loongarch64-android.so 
 
 cd -
-cd prebuilts/clang/host/linux-x86/clang-r468909b/lib64/clang/15.0.3/lib/linux/loongarch64
-touch libFuzzer.a 
-
-cd -
-
 ```
 
 
@@ -142,8 +126,12 @@ $ cp -r 1.51.0 1.51.0.bak
 tar Jxf ../../../../rust/build/dist/rust-dev-1.51.0-dev-x86_64-unknown-linux-gnu.tar.xz
 cd rust-dev-1.51.0-dev-x86_64-unknown-linux-gnu
 ./install.sh --prefix=../1.51.0
+## 目前上述命令存在一个警告， 暂时忽略
+##  install: WARNING: failed to run ldconfig. this may happen when not installing as root. run with --verbose to see the error
+
 
 ## 更新rust代码
+cd ..
 cp -r ../../../../rust/library/* 1.51.0/src/stdlibs/library/
 cp -r ../../../../rust/vendor/* 1.51.0/src/stdlibs/vendor/
 ```
