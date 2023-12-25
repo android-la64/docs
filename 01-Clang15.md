@@ -998,6 +998,81 @@ python ../ndk/run_tests.py --abi riscv64 --clean-device --config qa_config_thead
 
 
 
+# 7. Rust
+
+###  7.1 源代码
+
+#### 7.1.1 【内部】- 直接解压文件
+
+#### 7.1.2 从github下载源代码
+
+```shell
+$ cd $LA_WS
+
+## 克隆代码
+git clone -b a12_larch git@github.com:android-la64/rust.git
+
+cd rust
+```
+
+
+
+### 7.2 编译前设置
+
+#### 7.2.1 配置工具链
+
+```shell
+## 设置Clang路径
+export CLANG_PATH="/your/clang/path"
+## 例：
+export CLANG_PATH=/data5/yuanjian/loongson/clang_la/out/install/linux-x86/clang-r468909b
+
+## 设置NDK路径
+export NDK_PATH="/your/ndk/path"
+## 例：
+export NDK_PATH=/data5/yuanjian/loongson/ndk23/out/linux/android-ndk-r23c
+```
+
+
+
+#### 7.2.2 fix库缺失问题
+
+编译时要用到libgcc.a库，需要从其它地方拷贝过来。以从loongson-gnu-toolchain拷贝为例，
+
+```shell
+## 下载loongson-gnu-toolchain， 如无法通过命令下载，可尝试通过浏览器进行下载
+cd /tmp/
+wget https://github.com/android-la64/rust/releases/download/1.51.0/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.2.tar.xz
+
+## 解压文件
+tar Jxf loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.2.tar.xz
+
+## 拷贝库文件
+cp loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.2/lib/gcc/loongarch64-linux-gnu/8.3.0/libgcc.a $CLANG_PATH/toolchains/llvm/prebuilt/linux-x86_64/lib/gcc/loongarch64-linux-android/4.9.x/
+```
+
+
+
+### 7.3 编译、打包
+
+```shell
+## 进入rust目录
+cd $LA_WS
+cd rust
+
+## 编译
+./android_build/build.sh
+```
+
+编译完成后，会自动完成打包，创建的包放在**build/dist**目录下：
+
+```shell
+ls -lh build/dist/rust-dev-1.51.0-dev-x86_64-unknown-linux-gnu.tar.xz
+-rw-r--r-- 1 user group 38M 12月 24 17:46 build/dist/rust-dev-1.51.0-dev-x86_64-unknown-linux-gnu.tar.xz
+```
+
+
+
 # A. 内部测试用的额外步骤
 
 本章描述的步骤只用于<span style="color:red">熵核</span>内部测试人员反复进行clang、ndk测试时使用。
