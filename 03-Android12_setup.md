@@ -119,21 +119,21 @@ $ tree -L 1
 
 $ cd aosp.la/prebuilts/rust/linux-x86
 
-## 备份老版本
-$ cp -r 1.51.0 1.51.0.bak
-
-## 安装rust
+## 安装rust binary
 tar Jxf ../../../../rust/build/dist/rust-dev-1.51.0-dev-x86_64-unknown-linux-gnu.tar.xz
-cd rust-dev-1.51.0-dev-x86_64-unknown-linux-gnu
-./install.sh --prefix=../1.51.0
+rust-dev-1.51.0-dev-x86_64-unknown-linux-gnu/install.sh --prefix=../1.51.0
 ## 目前上述命令存在一个警告， 暂时忽略
 ##  install: WARNING: failed to run ldconfig. this may happen when not installing as root. run with --verbose to see the error
 
+## 更新rust source for android
+tar Jxf ../../../../rust/build/dist/rust-src-android.tar.xz -C 1.51.0
+```
 
-## 更新rust代码
-cd ..
-cp -r ../../../../rust/library/* 1.51.0/src/stdlibs/library/
-cp -r ../../../../rust/vendor/* 1.51.0/src/stdlibs/vendor/
+如果编译aosp时提示rust找不到libc++.so等标准库，尝试执行下面命令来修复这个问题：
+
+```shell
+cd aosp.la
+sudo ldconfig ./prebuilts/clang/host/linux-x86/clang-r468909b/lib
 ```
 
 
@@ -156,6 +156,7 @@ packages/modules/ArtPrebuilt
 prebuilts/clang/host/linux-x86
 prebuilts/runtime
 system/apex
+...
 
 # 仅以cts为例
 cd /data0/xxx/aosp.la64/cts

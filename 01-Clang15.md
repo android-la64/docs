@@ -1010,9 +1010,7 @@ python ../ndk/run_tests.py --abi riscv64 --clean-device --config qa_config_thead
 $ cd $LA_WS
 
 ## 克隆代码
-git clone -b a12_larch git@github.com:android-la64/rust.git
-
-cd rust
+git clone -b a12_larch git@github.com:android-la64/rust.git && cd rust
 ```
 
 
@@ -1035,40 +1033,26 @@ export NDK_PATH=/data5/yuanjian/loongson/ndk23/out/linux/android-ndk-r23c
 
 
 
-#### 7.2.2 fix库缺失问题
-
-编译时要用到libgcc.a库，需要从其它地方拷贝过来。以从loongson-gnu-toolchain拷贝为例，
-
-```shell
-## 下载loongson-gnu-toolchain， 如无法通过命令下载，可尝试通过浏览器进行下载
-cd /tmp/
-wget https://github.com/android-la64/rust/releases/download/1.51.0/loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.2.tar.xz
-
-## 解压文件
-tar Jxf loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.2.tar.xz
-
-## 拷贝库文件
-cp loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.2/lib/gcc/loongarch64-linux-gnu/8.3.0/libgcc.a $CLANG_PATH/toolchains/llvm/prebuilt/linux-x86_64/lib/gcc/loongarch64-linux-android/4.9.x/
-```
-
-
-
 ### 7.3 编译、打包
 
 ```shell
 ## 进入rust目录
-cd $LA_WS
-cd rust
+cd $LA_WS/rust
 
 ## 编译
 ./android_build/build.sh
 ```
 
-编译完成后，会自动完成打包，创建的包放在**build/dist**目录下：
+编译完成后，会自动完成打包，创建的包放在**build/dist**目录下。AOSP编译主要用到下面两个包：
 
 ```shell
+## binary
 ls -lh build/dist/rust-dev-1.51.0-dev-x86_64-unknown-linux-gnu.tar.xz
 -rw-r--r-- 1 user group 38M 12月 24 17:46 build/dist/rust-dev-1.51.0-dev-x86_64-unknown-linux-gnu.tar.xz
+
+## source for android
+ls -lh build/dist/rust-src-android.tar.xz
+-rw-r--r-- 1 user group 2.4M 12月 26 15:22 build/dist/rust-src-android.tar.xz
 ```
 
 
