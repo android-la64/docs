@@ -1047,8 +1047,8 @@ cd $LA_WS/rust
 
 ```shell
 ## binary
-ls -lh build/dist/rust-dev-1.51.0-dev-x86_64-unknown-linux-gnu.tar.xz
--rw-r--r-- 1 user group 38M 12月 24 17:46 build/dist/rust-dev-1.51.0-dev-x86_64-unknown-linux-gnu.tar.xz
+ls -lh build/dist/rust-1.51.0-dev-x86_64-unknown-linux-gnu.tar.xz
+-rw-r--r-- 1 user group 128M 12月 24 17:50 build/dist/rust-1.51.0-dev-x86_64-unknown-linux-gnu.tar.xz
 
 ## source for android
 ls -lh build/dist/rust-src-android.tar.xz

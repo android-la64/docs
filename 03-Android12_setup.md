@@ -120,8 +120,8 @@ $ tree -L 1
 $ cd aosp.la/prebuilts/rust/linux-x86
 
 ## 安装rust binary
-tar Jxf ../../../../rust/build/dist/rust-dev-1.51.0-dev-x86_64-unknown-linux-gnu.tar.xz
-rust-dev-1.51.0-dev-x86_64-unknown-linux-gnu/install.sh --prefix=../1.51.0
+tar Jxf ../../../../rust/build/dist/rust-1.51.0-dev-x86_64-unknown-linux-gnu.tar.xz
+rust-1.51.0-dev-x86_64-unknown-linux-gnu/install.sh --prefix=../1.51.0
 ## 目前上述命令存在一个警告， 暂时忽略
 ##  install: WARNING: failed to run ldconfig. this may happen when not installing as root. run with --verbose to see the error
 
