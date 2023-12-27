@@ -119,7 +119,14 @@ $ tree -L 1
 
 $ cd aosp.la/prebuilts/rust/linux-x86
 
-## 安装rust binary
+## 检查rust安装包是否存在。如rust不是本地编译，可从https://github.com/android-la64/rust/releases/tag/1.51.0-loongarch64-linux-android下载, 并将下面操作的路径换为下载路径。
+ls ../../../../rust/build/dist/rust-1.51.0-dev-x86_64-unknown-linux-gnu.tar.xz
+ls ../../../../rust/build/dist/rust-src-android.tar.xz
+
+## 删除老目录，避免直接安装导致多版本库重复的问题
+rm 1.51.0
+
+## 安装rust binary。
 tar Jxf ../../../../rust/build/dist/rust-1.51.0-dev-x86_64-unknown-linux-gnu.tar.xz
 rust-1.51.0-dev-x86_64-unknown-linux-gnu/install.sh --prefix=../1.51.0
 ## 目前上述命令存在一个警告， 暂时忽略
@@ -129,14 +136,22 @@ rust-1.51.0-dev-x86_64-unknown-linux-gnu/install.sh --prefix=../1.51.0
 tar Jxf ../../../../rust/build/dist/rust-src-android.tar.xz -C 1.51.0
 ```
 
-如果编译aosp时提示rust找不到libc++.so等标准库，尝试执行下面命令来修复这个问题：
+如果编译时提示rust找不到libc++.so等标准库，尝试执行下面命令来修复这个问题：
 
 ```shell
 cd aosp.la
 sudo ldconfig ./prebuilts/clang/host/linux-x86/clang-r468909b/lib
 ```
 
+如果编译时prebuilts/rust/linux-x86/Android.bp依赖文件缺失，可能是因为rust库id与Android.bp内部配置不匹配，需更新Android.bp。错误如下：
 
+```shell
+error: prebuilts/rust/linux-x86/Android.bp:43:1: module "libtest_x86_64-unknown-linux-gnu" variant "linux_glibc_x86_64_rlib": module source path "prebuilts/rust/linux-x86/1.51.0/lib/rustlib/x86_64-unknown-linux-gnu/lib/libtest-3df1ba8b0c06678c.rlib" does not exist
+error: prebuilts/rust/linux-x86/Android.bp:21:1: module "libstd_x86_64-unknown-linux-gnu" variant "linux_glibc_x86_64_rlib": module source path "prebuilts/rust/linux-x86/1.51.0/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-94e3c598474e889d.rlib" does not exist
+17:56:06 soong bootstrap failed with: exit status 1
+```
+
+如果编译时提示rlib库重复，可能是因为设置Rust时没有删除prebuilts/rust/linux-x86/1.51.0，导致多个编译版本同时存在。
 
 #### 1.5.4 Patch
 
@@ -176,7 +191,7 @@ $ ./apply-patch.sh /data0/xxx/aosp.la64
 
 
 
-# 2. 编译riscv64
+# 2. 编译loongarch64
 
 ### 2.1 编译image
 
