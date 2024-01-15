@@ -101,96 +101,6 @@ touch libclang_rt.hwasan-loongarch64-android.so
 cd -
 ```
 
-
-
-#### 1.5.3 设置Rust
-
-```shell
-## 以为本地的目录为例
-$ tree -L 1
-.
-├── aosp.la
-├── clang_la
-├── myenv.sh
-├── ndk23
-├── proxy.sh
-├── rust
-└── sync.github.sh
-
-$ cd aosp.la/prebuilts/rust/linux-x86
-
-## 检查rust安装包是否存在。如rust不是本地编译，可从https://github.com/android-la64/rust/releases/tag/1.51.0-loongarch64-linux-android下载, 并将下面操作的路径换为下载路径。
-ls ../../../../rust/build/dist/rust-1.51.0-dev-x86_64-unknown-linux-gnu.tar.xz
-ls ../../../../rust/build/dist/rust-src-android.tar.xz
-
-## 删除老目录，避免直接安装导致多版本库重复的问题
-rm 1.51.0
-
-## 安装rust binary。
-tar Jxf ../../../../rust/build/dist/rust-1.51.0-dev-x86_64-unknown-linux-gnu.tar.xz
-rust-1.51.0-dev-x86_64-unknown-linux-gnu/install.sh --prefix=../1.51.0
-## 目前上述命令存在一个警告， 暂时忽略
-##  install: WARNING: failed to run ldconfig. this may happen when not installing as root. run with --verbose to see the error
-
-## 更新rust source for android
-tar Jxf ../../../../rust/build/dist/rust-src-android.tar.xz -C 1.51.0
-```
-
-如果编译时提示rust找不到libc++.so等标准库，尝试执行下面命令来修复这个问题：
-
-```shell
-cd aosp.la
-sudo ldconfig ./prebuilts/clang/host/linux-x86/clang-r468909b/lib
-```
-
-如果编译时prebuilts/rust/linux-x86/Android.bp依赖文件缺失，可能是因为rust库id与Android.bp内部配置不匹配，需更新Android.bp。错误如下：
-
-```shell
-error: prebuilts/rust/linux-x86/Android.bp:43:1: module "libtest_x86_64-unknown-linux-gnu" variant "linux_glibc_x86_64_rlib": module source path "prebuilts/rust/linux-x86/1.51.0/lib/rustlib/x86_64-unknown-linux-gnu/lib/libtest-3df1ba8b0c06678c.rlib" does not exist
-error: prebuilts/rust/linux-x86/Android.bp:21:1: module "libstd_x86_64-unknown-linux-gnu" variant "linux_glibc_x86_64_rlib": module source path "prebuilts/rust/linux-x86/1.51.0/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-94e3c598474e889d.rlib" does not exist
-17:56:06 soong bootstrap failed with: exit status 1
-```
-
-如果编译时提示rlib库重复，可能是因为设置Rust时没有删除prebuilts/rust/linux-x86/1.51.0，导致多个编译版本同时存在。
-
-#### 1.5.4 Patch
-
-部分模块本身太大无法上传，部分二进制文件为了绕过编译检查而用了假的（目前还编译不出来），因此这些模块暂时使用patch方式提交修改。
-
-下面是以patch目录为`/data0/xxx/aosp-la64-patches，aosp目录为`/data0/xxx/aosp.la64`为例介绍打patch的方法。
-
-手动打patch:
-
-```shell
-$ cd /data0/xxx/aosp-la64-patches
-
-# 查看哪些模块需要打patch
-$ cat repos.txt
-cts
-packages/modules/ArtPrebuilt
-prebuilts/clang/host/linux-x86
-prebuilts/runtime
-system/apex
-...
-
-# 仅以cts为例
-cd /data0/xxx/aosp.la64/cts
-git apply /data0/xxx/aosp-la64-patches/cts.patch
-```
-
-自动打patch:
-
-```bash
-$ cd /data0/xxx/aosp-la64-patches
-$ ./apply-patch.sh /data0/xxx/aosp.la64
-```
-
-***注意：apply-patch.sh会通过git命令清除历史patch，如果有修改，需先做好备份***
-
-
-
-
-
 # 2. 编译loongarch64
 
 ### 2.1 编译image
@@ -205,9 +115,7 @@ lunch aosp_loongarch64-eng
 
 
 ## 2. 编译
-## 目前还缺少很多库，只能编译部分内容，如下命令
-$ m libbase liblog libc libc++
-
+$ m
 ```
 
 
@@ -235,15 +143,11 @@ $ m cfi_test_helper cfi_test_helper2
 
 ```
 
-
-
-
-
-# 2. 功能测试 - 【待整理】
+# 3. 功能测试 - 【待整理】
 
 每个命令的详细解释，请参考第5章的内容。
 
-### 2.1 Host上Gtest测试
+### 3.1 Host上Gtest测试
 
 ```bash
 # 编译
@@ -266,7 +170,7 @@ out.rv/host/linux-x86/nativetest64
 
 
 
-#### 2.1.1 测试结果 - 20220320
+#### 3.1.1 测试结果 - 20220320
 
 ```bash
 $ art/test.py --host -g --64
@@ -303,7 +207,7 @@ NO TESTS FAILED
 
 
 
-### 2.2 Host上Java测试
+### 3.2 Host上Java测试
 
 这个测试其实是测试JVM的，**对于Devices上的验证没有用处**。
 
@@ -320,7 +224,7 @@ $ art/test.py --host --64 -v -r -t 001-Main --baseline --jit   ## 测试一个�
 
 
 
-#### 2.2.1 测试结果 - 20220320
+#### 3.2.1 测试结果 - 20220320
 
 ```bash
 [^_^aosp.a12]$ art/test.py --host -r --64  
@@ -343,7 +247,7 @@ test-art-host-run-test-debug-prebuild-optimizing-no-relocate-ntrace-cms-checkjni
 
 
 
-### 2.3 测试环境同步
+### 3.3 测试环境同步
 
 在编译完成后，在板子上/模拟器上测试之前，必须将测试环境同步到目标设备中。
 
@@ -371,7 +275,7 @@ adb shell mkdir -p /data/dalvik-cache/riscv64
 
 
 
-### 2.5 Target上Java测试
+### 3.5 Target上Java测试
 
 
 
@@ -379,19 +283,91 @@ adb shell mkdir -p /data/dalvik-cache/riscv64
 
 
 
-# 3. 性能测试
+# 4. 性能测试
 
 
 
 
 
-# 4. ART测试概述
+# 5. ART测试概述
 
 
 
 
 
+# 6. 在qemu上运行
 
+### 6.1 编译image for qemu
+
+```bash
+## 设置环境
+## 注意，任何一个运行aosp命令的终端都必须执行以下两个命令
+. build/envsetup.sh
+lunch sdk_phone64_loongarch64
+
+
+## 2. 编译
+$ m
+```
+
+编译完成后，`$ANDROID_PRODUCT_OUT`目录下会产生xxx-qemu.img文件
+
+```shell
+ls $ANDROID_PRODUCT_OUT/*-qemu.img
+xxx/aosp.la64/out/target/product/emulator_loongarch64/product-qemu.img
+xxx/aosp.la64/out/target/product/emulator_loongarch64/ramdisk-qemu.img
+xxx/aosp.la64/out/target/product/emulator_loongarch64/system-qemu.img
+xxx/aosp.la64/out/target/product/emulator_loongarch64/system_ext-qemu.img
+xxx/aosp.la64/out/target/product/emulator_loongarch64/vendor-qemu.img
+```
+
+### 6.2 运行qemu
+
+下载qemu运行环境
+
+```shell
+git clone ssh://git@8.140.33.210:2222/android/android_qemu_env.git -b a12_larch
+```
+
+运行编译好的image
+
+```shell
+cd android_qemu_env
+./start-from-out-dir.sh
+```
+
+注意，运行这个脚本前需要先运行lunch命令`lunch sdk_phone64_loongarch64`
+
+脚本内容如下：
+
+```shell
+$ cat start-from-out-dir.sh
+
+#!/bin/bash
+
+IMG_DIR=$ANDROID_PRODUCT_OUT
+#IMG_DIR=$(pwd)
+
+./qemu-system-loongarch64 \
+        -M virt \
+        -bios ./QEMU_EFI.fd -kernel ./vmlinuz.efi \
+        -append "rootwait root=/dev/vda rw init=/ramdisk/init security=selinux androidboot.selinux=permissive printk.devkmsg=on androidboot.hardware=ranchu console=ttyS0,115200" \
+        -initrd $IMG_DIR/ramdisk-qemu.img \
+        -drive index=0,id=vendor,file=$IMG_DIR/vendor-qemu.img,read-only=on,if=none \
+        -device virtio-blk-pci,drive=vendor \
+        -drive index=1,id=userdata,file=$IMG_DIR/userdata.img,cache=unsafe,if=none \
+        -device virtio-blk-pci,drive=userdata \
+        -drive index=2,id=cache,file=$IMG_DIR/cache.img,cache=unsafe,if=none \
+        -device virtio-blk-pci,drive=cache \
+        -drive index=3,id=system,file=$IMG_DIR/system-qemu.img,read-only=on,if=none \
+        -device virtio-blk-pci,drive=system \
+        -drive index=4,id=product,file=$IMG_DIR/product-qemu.img,read-only=on,if=none \
+        -device virtio-blk-pci,drive=product \
+        -drive index=5,id=system_ext,file=$IMG_DIR/system_ext-qemu.img,read-only=on,if=none \
+        -device virtio-blk-pci,drive=system_ext \
+        -nographic \
+        -smp 1 -m 3584M \
+```
 
 
 
