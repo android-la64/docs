@@ -371,6 +371,129 @@ IMG_DIR=$ANDROID_PRODUCT_OUT
 
 
 
+
+
+# A. uboot分区烧录方式
+
+常规的Android采用Uboot + fastboot 方式进行。
+
+
+
+### A.1 生成分区
+
+启动板子进入uboot环境，设置`partitions`环境变量并保存
+
+```bash
+$ setenv partitions "xxx"
+$ gpt write mmc 0 ${partitions}  ## 或者其他保存命令
+```
+
+上述命令中的xxx代表的信息如下（注意一定没有回车换行，下面加了回车换行只是为了阅读方便）：
+
+```bash
+name=sparse,size=2031kb;
+name=bootpart_a,size=16MiB;name=bootpart_b,size=16MiB;
+name=boot_a,size=32MiB;name=boot_b,size=32MiB;
+name=vendor_boot_a,size=32MiB;name=vendor_boot_b,size=32MiB;
+name=tee_a,size=32MiB;name=tee_b,size=32MiB;
+name=dtbo_a,size=8MiB;name=dtbo_b,size=8MiB;
+name=super,size=4096MiB;
+name=vbmeta_a,size=1MiB;name=vbmeta_b,size=1MiB;
+name=vbmeta_system_a,size=1MiB;name=vbmeta_system_b,size=1MiB;
+name=misc,size=2MiB;name=metadata,size=16MiB;
+name=userdata,size=-
+```
+
+在`$OUT`目录下生成的super.img包含如下四个分区文件
+
+```bash
+$ ll
+total 1456272
+-rw-r--r-- 1 wendong xcvmg   73031680 1月  11 14:30 product_a.img
+-rw-r--r-- 1 wendong xcvmg          0 1月  11 14:05 product_b.img
+-rw-r--r-- 1 wendong xcvmg 1097191424 1月  11 14:23 system_a.img
+-rw-r--r-- 1 wendong xcvmg          0 1月  11 14:05 system_b.img
+-rw-r--r-- 1 wendong xcvmg  140648448 1月  12 03:02 system_ext_a.img
+-rw-r--r-- 1 wendong xcvmg          0 1月  11 14:05 system_ext_b.img
+-rw-r--r-- 1 wendong xcvmg  185692160 1月  12 03:01 vendor_a.img
+-rw-r--r-- 1 wendong xcvmg          0 1月  11 14:05 vendor_b.img
+```
+
+
+
+### A.2 烧写镜像
+
+步骤如下
+
+1. 板子上电后，在窗口A启动minicom（`sudo minicom -D /dev/ttyUSB2` ）。
+2. 在窗口B1（image所在目录，比如 `/back/wendong/aosp/aosp_light_imags/20230810`）
+3. 依次执行执行如下命令（其中部分命令在另外的窗口B2执行）：
+
+```bash
+## 窗口A  - minicom （任意目录都行）： sudo minicom -D /dev/ttyUSB2
+## 窗口B1 - images所在目录（比如 /back/wendong/aosp/aosp_light_imags/20230810）
+## 窗口B2 - rules所在目录（/back/wendong/aosp/aosp_light_imags/rules）
+
+## 第一步 - 窗口B2
+lsusb  ## 此时应该可以看到2345:7654 USB设备
+sudo cp 51-android.rules.2345  /etc/udev/rules.d/51-android.rules
+sudo cp 51-android.rules.2345  /lib/udev/rules.d/51-android.rules
+sudo service udev restart
+## 此时重新插拔板子上的USB线（大口的USB）
+
+## 第二步 - 窗口B1
+## fastboot可以采用当前目录下的fastboot
+./fastboot flash ram u-boot-with-spl.bin
+./fastboot reboot
+
+## 第三步 - 窗口B2
+lsusb  ## 此时应该可以看到 1234:8888 USB设备
+sudo cp 51-android.rules.1234  /etc/udev/rules.d/51-android.rules
+sudo cp 51-android.rules.1234  /lib/udev/rules.d/51-android.rules
+sudo service udev restart
+## 此时重新插拔板子上的USB线（大口的USB）
+
+
+## 第四步 - 窗口B1
+./fastboot flash uboot u-boot-with-spl.bin
+
+## 烧录各个分区
+./fastboot flash bootpart bootpart.ext4  ## 从20230905开始，这个文件名字被改为 bootpart.img ！！
+## 也就是说，烧录老日期的image，这个文件名字是 bootpart.ext4 ；20230905日期之后的image，文件名字变为 bootpart.img 
+
+./fastboot flash boot boot.img     ## 如果此处被分成了多于3个包下载，说明上述步骤没有作对
+./fastboot flash vendor_boot vendor_boot.img
+./fastboot flash super super.img   ## 如果此处被分成了多于13个包下载，说明上述步骤没有作对
+./fastboot flash userdata userdata.img
+./fastboot flash vbmeta vbmeta.img
+./fastboot flash vbmeta_system vbmeta_system.img
+
+## 重新划分分区后，需执行此命令，否则可能导致Android无法启动
+./fastboot erase metadata 
+./fastboot erase misc
+
+
+### 完成！
+## 第五步 - 窗口B2
+sudo cp 51-android.rules.18d1  /etc/udev/rules.d/51-android.rules
+sudo cp 51-android.rules.18d1  /lib/udev/rules.d/51-android.rules
+sudo service udev restart
+# 板子关电，拨回跳线，重启板子
+
+## 重启后大约2分钟
+lsusb        ## 此时应该可以看到 18d1:4ee7 USB设备
+adb devices  ## 此时应该可以看到设备
+
+## root
+adb root
+```
+
+
+
+
+
+
+
 # B. 常用命令
 
 ### B.1 QEMU编译
