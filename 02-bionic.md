@@ -96,12 +96,12 @@ source  bionic_func_tests.sh
 ## create test directory
 export BIONIC_TEST_DIR="/data/local/bionic-tests/data"
 
-out_dir="${OUT_DIR:=out}"
+# out_dir="${OUT_DIR:=out}"
 log_dir="./bionic-test-log"
 
 ## upload tests
 adb shell "mkdir -p $BIONIC_TEST_DIR"
-adb push ${out_dir}/target/product/evb_light/data/nativetest64 "$BIONIC_TEST_DIR"
+adb push ${OUT}/data/nativetest64 "$BIONIC_TEST_DIR"
 
 if [[ ! -d $log_dir ]]; then
   mkdir -p $log_dir
@@ -120,10 +120,13 @@ all_tests+=" memunreachable_test"
 all_tests+=" memunreachable_binder_test"
 all_tests+=" memunreachable_unit_test"
 
+# 以下这个测试时间非常长，没有放入上面的测试列表
+# bionic-stress-tests
+
 time_stamp=`date +%m%d_%H%M%S`
 idx=1
 for test in $all_tests; do
-  adb shell "${BIONIC_TEST_DIR}/nativetest64/$test/$test" | tee "$log_dir/${time_stamp}_gtest_${idx}_$test.log"
+  adb shell "${BIONIC_TEST_DIR}/$test/$test" | tee "$log_dir/${time_stamp}_gtest_${idx}_$test.log"
   idx=$(( $idx + 1 ))
 done
 ```
@@ -132,7 +135,81 @@ done
 
 ### 3.3 测试结果
 
-​	上述测试都PASS。
+【20240224】测试，有不少FAILED，需要检查。
+
+```
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] fenv.feenableexcept_fegetexcept (104 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] setjmp.setjmp_signal_mask (93 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] setjmp.sigsetjmp_1_signal_mask (90 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] stack_unwinding.unwind_through_signal_frame (89 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] stack_unwinding.unwind_through_signal_frame_SA_SIGINFO (89 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] unistd.exec_argv0_null (281 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] sys_ptrace.watchpoint_stress (127 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] sys_ptrace.watchpoint_imprecise (104 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] sys_ptrace.hardware_breakpoint (102 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] unistd_nofortify.exec_argv0_null (272 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_rw_load_segment (95 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_unaligned_shdr_offset (94 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_zero_shentsize (93 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_zero_shstrndx (93 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_empty_shdr_table (97 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_zero_shdr_table_offset (94 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_zero_shdr_table_content (93 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_textrels (94 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_textrels2 (94 ms)
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] 19 tests, listed below:
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] fenv.feenableexcept_fegetexcept
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] setjmp.setjmp_signal_mask
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] setjmp.sigsetjmp_1_signal_mask
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] stack_unwinding.unwind_through_signal_frame
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] stack_unwinding.unwind_through_signal_frame_SA_SIGINFO
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] unistd.exec_argv0_null
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] sys_ptrace.watchpoint_stress
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] sys_ptrace.watchpoint_imprecise
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] sys_ptrace.hardware_breakpoint
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] unistd_nofortify.exec_argv0_null
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_rw_load_segment
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_unaligned_shdr_offset
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_zero_shentsize
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_zero_shstrndx
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_empty_shdr_table
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_zero_shdr_table_offset
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_zero_shdr_table_content
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_textrels
+0224_042815_gtest_1_bionic-unit-tests.log:[  FAILED  ] dlfcn.dlopen_invalid_textrels2
+0224_042815_gtest_1_bionic-unit-tests.log:19 FAILED TESTS
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] fenv.feenableexcept_fegetexcept (89 ms)
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] setjmp.setjmp_signal_mask (75 ms)
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] setjmp.sigsetjmp_1_signal_mask (74 ms)
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] stack_unwinding.unwind_through_signal_frame (73 ms)
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] stack_unwinding.unwind_through_signal_frame_SA_SIGINFO (74 ms)
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] unistd.exec_argv0_null (243 ms)
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] sys_ptrace.watchpoint_stress (109 ms)
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] sys_ptrace.watchpoint_imprecise (87 ms)
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] sys_ptrace.hardware_breakpoint (88 ms)
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] unistd_nofortify.exec_argv0_null (252 ms)
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] 10 tests, listed below:
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] fenv.feenableexcept_fegetexcept
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] setjmp.setjmp_signal_mask
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] setjmp.sigsetjmp_1_signal_mask
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] stack_unwinding.unwind_through_signal_frame
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] stack_unwinding.unwind_through_signal_frame_SA_SIGINFO
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] unistd.exec_argv0_null
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] sys_ptrace.watchpoint_stress
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] sys_ptrace.watchpoint_imprecise
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] sys_ptrace.hardware_breakpoint
+0224_042815_gtest_2_bionic-unit-tests-static.log:[  FAILED  ] unistd_nofortify.exec_argv0_null
+0224_042815_gtest_2_bionic-unit-tests-static.log:10 FAILED TESTS
+0224_042815_gtest_7_malloc_hooks_system_tests.log:[  FAILED  ] MallocHooksTest.DISABLED_aligned_alloc_hook_error (28 ms)
+0224_042815_gtest_7_malloc_hooks_system_tests.log:[  FAILED  ] 1 test, listed below:
+0224_042815_gtest_7_malloc_hooks_system_tests.log:[  FAILED  ] MallocHooksTest.DISABLED_aligned_alloc_hook_error
+0224_042815_gtest_7_malloc_hooks_system_tests.log: 1 FAILED TEST
+0224_042815_gtest_7_malloc_hooks_system_tests.log:[  FAILED  ] MallocHooksTest.aligned_alloc_hook_error (635 ms)
+0224_042815_gtest_7_malloc_hooks_system_tests.log:[  FAILED  ] 1 test, listed below:
+0224_042815_gtest_7_malloc_hooks_system_tests.log:[  FAILED  ] MallocHooksTest.aligned_alloc_hook_error
+0224_042815_gtest_7_malloc_hooks_system_tests.log: 1 FAILED TEST
+
+```
 
 
 
