@@ -77,7 +77,6 @@ $ m bionic-unit-tests bionic-unit-tests-static linker-unit-tests bionic-fortify-
 
 
 ## 测试
-## 以下的测试也在脚本scripts/bionic-test.sh
 source  bionic_func_tests.sh
 ```
 
