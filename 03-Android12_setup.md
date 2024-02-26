@@ -223,16 +223,14 @@ $ m test-art-host-gtest64
 
 ### 3.4 system/core测试
 
-
-
 ```bash
-$ m KernelLibcutilsTest libcutils_test_static init_kill_services_test libcutils_test
-$ m libcutils_sockets_test libstatspull_lazy_test libstatspush_compat_test libstatssocket_lazy_test
-$ m bootstat_tests charger_test libhealthd_charger_test
-$ m libutils_test storaged-unit-tests sync-unit-tests libkeyutils-tests 
-$ m libpackagelistparser_test libstatssocket_lazy_test libstatspush_compat_test libstatspull_lazy_test
+## 编译（build）
+$ . art/xc_tools/system_core_g_b.sh 
+## 具体内容请参考上述脚本
 
-$ m libappfuse_test secure-storage-unit-test
+
+## 运行（run)
+$ . art/xc_tools/system_core_g_r.sh 
 ```
 
 
