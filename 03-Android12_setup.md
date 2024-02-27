@@ -225,23 +225,29 @@ $ m test-art-host-gtest64
 
 ```bash
 ## 编译（build）
-$ . art/xc_tools/system_core_g_b.sh 
+$ . art/xc_tools/system_core_g_b.sh
 ## 具体内容请参考上述脚本
 
 
 ## 运行（run)
-$ . art/xc_tools/system_core_g_r.sh 
+$ . art/xc_tools/system_core_g_r.sh
 ```
 
 
 
-### 3.5 
+### 3.5 system/unwinding测试
+
+```bash
+## 编译（build）
+$ . art/xc_tools/system_unwinding_g_b.sh
+## 具体内容请参考上述脚本
 
 
+## 运行（run)
+$ . art/xc_tools/system_unwinding_g_r.sh
+```
 
-
-
-
+### 3.6
 
 # 4. 性能测试
 
