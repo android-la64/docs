@@ -86,6 +86,8 @@ $ m
 
 【本节文档在接下来的1-2周会持续更新】
 
+*注意注意注意：image一定不能包含art device端测试时编译出来的目标文件*
+
 
 
 ### 2.3 实际机器运行
@@ -104,16 +106,23 @@ $ m
 
 
 
-### 3.2 art C++单元测试
+### 3.2 art host端单元测试
 
-#### 3.2.1 Host上Gtest测试
+#### 3.2.1 编译
 
 ```bash
 # 编译
 $ art/tools/buildbot-build.sh --host
+```
 
+
+
+#### 3.2.2 Host上Gtest测试
+
+```bash
 # 测试 : 这两个命令是等价的，必须执行一次以下命令，然后对应的目录才有可执行文件
 $ art/test.py --host -g --64
+## 或
 $ m test-art-host-gtest64
 ```
 
@@ -162,31 +171,13 @@ test-art-host-gtest-art_compiler_tests64 【Dwarf存在错误，可能是编译�
 
 
 
-#### 3.2.3 Device上Gtest测试
-
-```bash
-# 编译
-$ art/tools/buildbot-build.sh --target
-
-# 将测试文件push到device上： push.sh 在TOP目录下
-$ . push.sh
-
-## 可以是独立的测试
-$ art/tools/run-gtests.sh -j4
-```
-
-
-
-### 3.3 art Java单元测试
-
-
-
-#### 3.3.1 Host上Java测试
+#### 3.2.3 Host上Java测试
 
 这个测试其实是测试JVM的，**对于Devices上的验证没有用处**。除非开发新的测试用例，用此种方法验证测试用例本身，
 
 ```bash
-[^_^aosp.a12]$ art/test.py --host -r --64  
+# 测试
+art/test.py --host -r --64  
 ['/data1/wendong/Android/aosp.a12/art/test/testrunner/testrunner.py', '--host', '--64']
 Concurrency: 64 (host)
 [ 80% 3730/4640 ] test-art-host-run-test-debug-prebuild-optimizing-no-relocate-ntrace-cms-checkjni-picimage-ndebuggable-no-jvmti-cdex-fast-656-checker-simd-opt64 FAIL                       
@@ -206,17 +197,40 @@ test-art-host-run-test-debug-prebuild-optimizing-no-relocate-ntrace-cms-checkjni
 
 
 
-#### 3.3.2 Device上Java测试
+### 3.3 art device端单元测试
+
+#### 3.3.1 编译与上传
 
 ```bash
 # 编译
-$ art/tools/buildbot-build.sh --host
+$ export OUT_DIR=out.test  # 重新设置输出目录
+$ art/tools/buildbot-build.sh --target
 
-# 测试 : 这两个命令是等价的，必须执行一次以下命令，然后对应的目录才有可执行文件
-$ art/test.py --host -g --64
+# 将测试文件push到device上： push.sh 在TOP目录下
+$ . push.sh
+```
 
+*注意注意注意：art测试程序编译后会影响android系统启动，因此一定要重新设置输出目录*
+
+
+
+#### 3.3.2 Device上Gtest测试
+
+```bash
 ## 可以是独立的测试
-$ m test-art-host-gtest64
+$ art/tools/run-gtests.sh -j4
+```
+
+
+
+#### 3.3.3 Device上Java测试
+
+```bash
+# 测试所有用例
+art/test.py -r --target --no-prebuild --debug --no-image --64 --interpreter -j 1
+
+# 测试001-Main
+art/test.py -r --target --no-prebuild --debug --no-image --64 --interpreter -j 1 -t 001-Main
 ```
 
 
@@ -247,13 +261,172 @@ $ . art/xc_tools/system_unwinding_g_b.sh
 $ . art/xc_tools/system_unwinding_g_r.sh
 ```
 
+
+
 ### 3.6
 
 # 4. 性能测试
 
+[TBD]
+
+# 5. 调试
+
+### 5.1 logcat
+
+logcat是一个用于查看系统日志的命令行工具。它允许你查看应用程序、系统服务以及其他系统组件产生的日志消息。
+
+以下是一些常用的logcat命令：
+
+1. **查看所有日志：**
+
+   ```bash
+   $ adb logcat
+   ```
+
+   这条命令将输出所有的日志消息，包括应用程序、系统服务等的日志消息。
+
+2. **过滤日志：**
+
+   ```bash
+   $ adb logcat <TAG>:<LEVEL>
+   ```
+
+   这条命令将输出指定标签（TAG）和级别（LEVEL）的日志消息。例如，要查看特定应用程序的日志消息，可以使用应用程序的标签和级别，例如：
+
+   ```bash
+   $ adb logcat MyAppTag:D
+   ```
+
+   这将输出MyAppTag标签的调试（Debug）级别的日志消息。
+
+3. **保存日志到文件：**
+
+   ```bash
+   $ adb logcat -d > logfile.txt
+   ```
+
+   这条命令将所有的日志消息保存到指定的文件中。
+
+4. **清除日志缓冲区：**
+
+   ```bash
+   $ adb logcat -c
+   ```
+
+   这条命令将清除日志缓冲区中的所有日志消息。
+
+以上是一些常用的logcat命令示例。logcat还有许多其他选项和功能，你可以使用`adb logcat --help`来查看更多用法和选项。
 
 
 
+### 5.2 Tombstone
+
+Tombstone是指发生应用程序崩溃或系统崩溃时生成的一种特殊类型的日志文件。Tombstone文件通常包含了导致崩溃的信息，例如堆栈跟踪、寄存器值等。
+
+Tombstone文件通常位于`/data/tombstones`目录下，文件名通常以“tombstone_”开头，后跟ID。
+
+```bash
+# 输出tombstone文件列表
+$ adb shell ls /data/tombstones
+                                                                
+tombstone_00     tombstone_08.pb  tombstone_17     tombstone_25.pb  tombstone_34     tombstone_42.pb
+tombstone_00.pb  tombstone_09     tombstone_17.pb  tombstone_26     tombstone_34.pb  tombstone_43
+...
+tombstone_07.pb  tombstone_16     tombstone_24.pb  tombstone_33     tombstone_41.pb
+tombstone_08     tombstone_16.pb  tombstone_25     tombstone_33.pb  tombstone_42
+
+# 输出tombstone_00的内容
+$ adb shell cat /data/tombstones/tombstone_00
+*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+Build fingerprint: 'Android/aosp_loongarch64/generic_loongarch64:12/SP1A.210812.016/eng.yuanji.20240228.123014:eng/test-keys'
+Revision: '0'
+ABI: 'loongarch64'
+Timestamp: 2024-03-12 08:40:11.012352070+0000
+Process uptime: 1s
+Cmdline: /apex/com.android.art/bin/art/loongarch64/art_compiler_tests --gtest_filter=LinearizeTest.CFG6
+pid: 4555, tid: 4555, name: art_compiler_te  >>> /apex/com.android.art/bin/art/loongarch64/art_compiler_tests <<<
+uid: 0
+signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0
+Cause: null pointer dereference
+    r2  00007fffe7d90050  r4  0000000000000000  r5  00007fffe79e0f68  r6  00007fffe7964068
+    r7  0000000000000000  r8  0000000000000000  r9  0000000000040000  r10 0000000000000000
+    r11 0000000000000001  r12 0000000000000000  r13 00007fffd8da3d48  r14 00000000000000c4
+    r15 00007fffe726829c  r16 000000000059b284  r17 000000000a000000  r18 000000007fffffff
+    r19 00007ffffc100010  r20 0000000000000000  r21 0000000000000000  r22 0000000000000000
+    r23 0000000000000000  r24 00007fffe79e0f68  r25 0000000000000000  r26 00007ffffbc9e7b8
+    r27 00007ffffbc9e868  r28 0000000000000018  r29 000000000000007f  r30 0000000000000000
+    r31 0000000000000005
+    pc  0000000000000000  ra  00007fffd8d72030  sp  00007ffffbc9e760
+
+backtrace:
+      #00 pc 0000000000000000  <unknown>
+      #01 pc 00000000002f402c  /apex/com.android.art/lib64/libartd-compiler.so (art::SsaLivenessAnalysis::NumberInstructions()+584) (BuildId: affcacc21144368505ed70949c62eecb)
+      #02 pc 000000000000715c  [anon:scudo:primary]
+...
+```
+
+
+
+### 5.3 art device端gdb调试
+
+在测试前一定需要对“3.3 art device端单元测试”章节有充分的了解。
+
+下面以001-Main为例
+
+在【终端1】 启动gdb server端
+
+```bash
+# 启动gdb server
+$ art/test.py -r --target --no-prebuild --debug --no-image --64 --interpreter -j 1 -t 001-Main --gdb
+...
+Forward :5039 to local port and connect GDB
+Process /apex/com.android.art/bin/dalvikvm64 created; pid = 5668
+Listening on port 5039
+```
+
+在【终端2】 启动gdb client端
+
+```bash
+# 设置端口转发
+$ adb forward tcp:5039 tcp:5039
+
+# 启动gdb。该文件位于loongson-gnu-toolchain-8.3-x86_64-loongarch64-linux-gnu-rc1.2
+$ loongarch64-linux-gnu-gdb
+
+# 输入gdb命令
+(gdb) target extended-remote :5039
+Remote debugging using :5039
+No executable file now.
+warning: Could not load vsyscall page because no executable was specified
+0x00007fffd49373a0 in ?? ()
+
+## 暂时因未知原因无法在主程序上设置断点，只能在库函数上设置断点。
+## 因此通过执行continue后马上按ctrl + c来绕过无法b main的问题
+(gdb) c
+Continuing.
+^C
+Program received signal SIGINT, Interrupt.
+0x00007ffd3577a028 in ?? ()
+
+## 加载符号信息
+(gdb) set sysroot out.test/target/product/generic_loongarch64/symbols
+Reading symbols from out.test/target/product/generic_loongarch64/symbols/system/lib64/liblog.so...done.
+...
+(gdb) set solib-search-path out.test/target/product/generic_loongarch64/symbols/system/system_ext/apex/com.android.art.testing/lib64
+Reading symbols from ...
+
+## 设置断点
+(gdb) b art_quick_invoke_static_stub
+Breakpoint 1 at 0x7ffd3e53ab00: file art/runtime/arch/loongarch64/quick_entrypoints_loongarch64.S, line 314.
+
+## 运行到断点
+(gdb) c
+Continuing.
+
+Breakpoint 1, art_quick_invoke_static_stub ()
+    at art/runtime/arch/loongarch64/quick_entrypoints_loongarch64.S:314
+314	    INVOKE_STUB_CREATE_FRAME
+```
 
 
 
