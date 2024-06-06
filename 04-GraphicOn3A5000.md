@@ -74,7 +74,7 @@ vendor   /vendor     ext4    ro,barrier=1     wait,logical,first_stage_mount
  ```
 # 3.烧录
 
-编译完成后可以使用测试机中的loongnix系统下载源码并烧录
+编译完成后可以使用测试机中的loongnix系统下载源码并烧录。
 这里提供一下烧录脚本，用于从源码所在的服务器或者工作机上把镜像下载到本地并烧录到对应分区
 ```
 #!/bin/bash
@@ -116,5 +116,6 @@ boot_devices需与sda所在的pci地址保持一致,采用双系统方案的话�
 loongson@loongson-pc:/sys/block$ realpath sda
 /sys/devices/pci0000:00/0000:00:08.0/ata1/host0/target0:0:0/0:0:0:0/block/sda
 ```
+启动参数可以写在loongnix系统中的/boot/grub/grub.cfg文件里，并使用sudo update-grub，启动时可以在grub界面选择进入android。
 
 内核可使用android_qemu_env下的vmlinuz.efi
