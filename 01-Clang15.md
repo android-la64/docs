@@ -25,7 +25,7 @@ mkdir -p $LA_WS/ndk23
 
 ```bash
 ## 以下几行需要设置为环境变量
-export LA_WS=xxx/loongson
+export LA_WS=`pwd`
 export CLANG_OUT=$LA_WS/clang_la/out   ## 第四章的测试会用到
 
 export XZ_DEFAULTS="-T 0"  ## Only for xz compress
@@ -211,7 +211,7 @@ def test(self) -> None:
 
 #### 3.1.1 特别注意
 
-我们当前暂时禁用了部分Clang模块的编译，这部分需要龙芯继续，最终版本还是需要这些模块。
+我们当前暂时禁用了部分Clang模块的编译（`toolchain/llvm_android`），这部分需要龙芯继续，最终版本还是需要这些模块。
 
 ```diff
 diff --git a/do_build.py b/do_build.py
@@ -647,7 +647,7 @@ Testing Time: 42.61s
 
 
 
-# 5. Clang15 测试集测试 - TODO(这部分还没有准备好)
+# 5. Clang15 测试集测试
 
 LLVM测试集即LLVM test-suite，源代码独立于llvm-project外，代码仓库位于：https://github.com/llvm/llvm-test-suite
 
@@ -837,23 +837,6 @@ $ ninja check   ## 大概10-15分钟
 ```
 
 
-
-#### 5.3.4 测试结果
-
-| 测试配置             | 编译（Pass） | 编译（Fail） | 运行（Pass） | 运行（Fail） |
-| -------------------- | ------------ | ------------ | ------------ | ------------ |
-| CodeSize.cmake（Os） | Y            | 0            | 2026         | 0            |
-| Debug.cmake  (O0-g)  | Y            | 0            | 2026         | 0            |
-| MinSize.cmake（Oz）  | Y            | 0            | 2026         | 0            |
-| O0.cmake             | Y            | 0            | 2026         | 0            |
-| O3.cmake             | Y            | 0            | 2026         | 0            |
-| Os-g.cmake           | Y            | 0            | 2026         | 0            |
-| OsLTO.cmake          | Y            | 0            | 2026         | 0            |
-| Release.cmake        | Y            | 0            | 2026         | 0            |
-| ReleaseLTO.cmake     | Y            | 0            | 2026         | 0            |
-| ReleaseLTO-g.cmake   | Y            | 0            | 2026         | 0            |
-| ReleaseNoLTO.cmake   | Y            | 0            | 2026         | 0            |
-| ReleaseThinLTO.cmake | Y            | 0            | 2026         | 0            |
 
 
 

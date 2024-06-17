@@ -5,11 +5,15 @@
 建立工作目录:
 
 ```bash
-cd
-mkdir -p loongson/aosp.la
+## Workspace
+mkdir xxx; cd xxx ## xxx为自行设置的目录
+mkdir loongson
+## export 本目录 为 LA_WS
+
+
+mkdir -p $LA_WS/aosp.la
 cd loongson/aosp.la
 
-export aosp_ws=`pwd`
 ```
 
 
@@ -88,6 +92,65 @@ $ m
 
 *注意注意注意：image一定不能包含art device端测试时编译出来的目标文件*
 
+```bash
+## 最新说明请参考：8.140.33.210:2222/android/android_qemu_env.git/cmdline/README.md
+
+## 准备
+## 将上述git的四个文件copy到一个特定目录，比如：
+$ cd $LA_WS
+$ mkdir qemu.run & cd qemu.run
+$ cp /path/to/android_qemu_env/QEMU_EFI.fd .
+$ cp /path/to/android_qemu_env/cmdline/*.sh .
+$ cp /path/to/android_qemu_env/cmdline/vmlinuz.efi .
+
+## 然后执行如下命令生成img文件: androidroot.img
+$ create_androidimg.sh   ## 不需要参数
+
+$ . r.sh  ## 注意QEMU_EFI.fd的路径
+  ## 在启动界面（约60秒后），type ‘su’ 进入root提示符
+  ## 在root提示符下，type  "stop hwservicemanager" and then "start hwservicemanager" to eliminate output.
+
+## 然后按照如下步骤设置net
+```
+
+
+
+在su后的root界面下设置网络
+
+```bash
+console:/ # su
+console:/ # ifconfig eth0 up
+[  105.170256][   T16] e1000: eth0 NIC Link is Up 1000 Mbps Full Duplex, Flow Control: RX
+console:/ # [  105.197286][   T16] IPv6: ADDRCONF(NETDEV_CHANGE): eth0: link becomes ready
+
+console:/ # ifconfig eth0 10.0.2.15
+console:/ # ip rule add from all lookup main pref 1
+console:/ # ping 10.0.2.2
+PING 10.0.2.2 (10.0.2.2) 56(84) bytes of data.
+64 bytes from 10.0.2.2: icmp_seq=1 ttl=255 time=8.91 ms
+64 bytes from 10.0.2.2: icmp_seq=2 ttl=255 time=1.82 ms
+^C
+--- 10.0.2.2 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1005ms
+rtt min/avg/max/mdev = 1.826/5.370/8.915/3.545 ms
+
+```
+
+此时可以通过adb连接android
+
+```bash
+$ adb kill-server
+
+$ adb devices
+List of devices attached
+1234567890	device
+emulator-5554	device
+
+$ adb shell
+generic_loongarch64:/ # 
+
+```
+
 
 
 ### 2.3 实际机器运行
@@ -98,7 +161,7 @@ $ m
 
 # 3. 功能测试
 
-在本章，我们列出部分关键库在qemu上的测试（但是由于qemu运行速度较慢，不分测试还是需要在实际机器上运行）
+在本章，我们列出部分关键库在qemu上的测试（但是由于qemu运行速度较慢，部分测试还是需要在实际机器上运行）
 
 ### 3.1 bioinc编译测试
 
@@ -161,12 +224,21 @@ test-art-host-gtest-art_runtime_tests64
 test-art-host-gtest-art_sigchain_tests64
 NO TESTS SKIPPED
 FAILING TESTS
-test-art-host-gtest-art_compiler_host_tests64 【ARM汇编器存在错误，可能移植的编译器对ARM存在问题】
-test-art-host-gtest-art_compiler_tests64 【Dwarf存在错误，可能是编译器移植存在问题？】
-	[  PASSED  ] 894 tests.
-	[  FAILED  ] 2 tests, listed below:
-	[  FAILED  ] DwarfTest.DebugFrame
-	[  FAILED  ] DwarfTest.x86_64_RegisterMapping
+test-art-host-gtest-art_compiler_host_tests64
+test-art-host-gtest-art_compiler_tests64
+
+
+[  FAILED  ] ArmVIXLAssemblerTest.VixlJniHelpers
+[  FAILED  ] ArmVIXLAssemblerTest.VixlLoadFromOffset
+[  FAILED  ] ArmVIXLAssemblerTest.VixlStoreToOffset
+[  FAILED  ] AssemblerX86_64Test.Movss
+[  FAILED  ] AssemblerX86_64Test.Movsd
+
+[  FAILED  ] 2 tests, listed below:
+[  FAILED  ] DwarfTest.DebugFrame
+[  FAILED  ] DwarfTest.x86_64_RegisterMapping
+======= 以上错误都是由于采用了Clang15造成的  对比的汇编格式有变化造成的  =========
+
 ```
 
 
@@ -203,14 +275,12 @@ test-art-host-run-test-debug-prebuild-optimizing-no-relocate-ntrace-cms-checkjni
 
 ```bash
 # 编译
-$ export OUT_DIR=out.test  # 重新设置输出目录
-$ art/tools/buildbot-build.sh --target
+$ m & art/tools/buildbot-build.sh --target
+## 经过此次编译后，对应的image文件会发生变化（/apex）,此image文件不再可以启动qemu，必须删除重新编译image文件才行
 
 # 将测试文件push到device上： push.sh 在TOP目录下
 $ . push.sh
 ```
-
-*注意注意注意：art测试程序编译后会影响android系统启动，因此一定要重新设置输出目录*
 
 
 
@@ -227,7 +297,9 @@ $ art/tools/run-gtests.sh -j4
 
 ```bash
 # 测试所有用例
-art/test.py -r --target --no-prebuild --debug --no-image --64 --interpreter -j 1
+$ art/test.py -j 4 --target -r --64 --ndebug  --interpreter -v 
+## 上述命令大概需要40分钟
+$ art/test.py -j 4 --target -r --64 --no-prebuild --ndebug --no-image  --interpreter
 
 # 测试001-Main
 art/test.py -r --target --no-prebuild --debug --no-image --64 --interpreter -j 1 -t 001-Main
@@ -265,9 +337,19 @@ $ . art/xc_tools/system_unwinding_g_r.sh
 
 ### 3.6
 
+
+
+
+
+
+
 # 4. 性能测试
 
 [TBD]
+
+
+
+
 
 # 5. 调试
 
@@ -427,6 +509,8 @@ Breakpoint 1, art_quick_invoke_static_stub ()
     at art/runtime/arch/loongarch64/quick_entrypoints_loongarch64.S:314
 314	    INVOKE_STUB_CREATE_FRAME
 ```
+
+
 
 
 
