@@ -123,6 +123,8 @@ repo init -u https://android.googlesource.com/platform/manifest -b ndk-release-r
  cp -a prebuilts/clang/host/linux-x86/clang-r530567b prebuilts/clang/host/windows-x86/
 ```
 
+update: 2024.10.14, 目前的做法生成ndk时，由于clang-r530567b下边有个.git符号链接会导致最终检查ndk合法性时报错（符号链接指向目录外），更新manifests改为使用含有该目录的linux-x86仓库，然后用linkfile语法在darwin-x86/windows-x86下建立符号链接，可以正常生成。
+
 
 到aosp的编译环境，lunch loongson_3a5000-trunk_staging-eng，设置好必要的环境变量以便ndk编译找到相应的工具链等。
 
@@ -139,6 +141,25 @@ pip3 install poetry # 注意比较老的python可能会导致问题, poetry版�
 ~/.local/bin/poetry install # 在ndk子目录下
 ~/.local/bin/poetry shell
 ./checkbuild.py --package  --no-build-tests  --system linux --build-number 27
+```
+
+正常输出如下：
+
+```bash
+./checkbuild.py  --package  --no-build-tests  --system linux --build-number 27
+Machine has 24 CPUs
+Building modules: black canary-readme changelog clang cpufeatures gtest isort libshaderc make meta mypy native_app_glue ndk-build ndk-build-shortcut ndk-gdb ndk-gdb-shortcut ndk-lldb-shortcut ndk-stack ndk-stack-shortcut ndk-which ndk-which-shortcut ndk_helper pylint pytest python-packages pythonlint readme shader-tools simpleperf source.properties sysroot system-stl toolbox toolchain wrap.sh yasm
+Build finished
+Packaging NDK...
+
+Installed size: 2070 MiB
+Package size: 624 MiB
+Finished successfully
+Build: 0:03:38
+Packaging: 0:04:02
+Testing: 0:00:00
+Total: 0:07:41
+GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name org.freedesktop.Notifications was not provided by any .service files
 ```
 
 ## rust工具链
