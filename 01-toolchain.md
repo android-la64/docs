@@ -2,7 +2,7 @@
 
 操作系统：Ubuntu 20.04 或 22.04
 
-本章描述的步骤都是一次性的 - 除了`export`环境变量的命令需要放置到一个特定的文件或者`.bashrc`
+本节描述的步骤都是一次性的 - 除了`export`环境变量的命令需要放置到一个特定的文件或者`.bashrc`之外。
 
 ### 1.1 工作目录
 
@@ -84,15 +84,13 @@ sudo apt install mingw-w64
 
 # 2. Clang15源代码
 
-
-
 有2种获取初始源代码的方式 - 其中第二种方式（从清华+github获取）作为目前主要方式。
 
-任何人需要初始源代码，只要执行2.1.1 ~ 2.1.2中的**任何一个步骤**即可！！！
+任何人需要初始源代码，只要执行2.1 、 2.2中的**任何一个步骤**即可！！！
 
 
 
-### 2.1 【熵核内部】直接解压文件
+### 2.1 直接解压文件
 
 ```bash
 ## 将 /back/comm_back/1-android/clang15/clang_la-android.src.tar 解压到$ATOOLCHAIN_WS
@@ -108,7 +106,9 @@ repo sync -c
 
 
 
-### 2.2 下载源码（清华 + github）
+### 2.2 下载源码（清华镜像 + github）
+
+如果不存在2.1中的压缩文件，那么就从头下载。
 
 ```bash
 ##!! 必须先设置好ssh
@@ -127,7 +127,7 @@ repo init -u git@github.com:android-la64/manifest.git -b clang-r468909b
 repo sync -c
 ```
 
-Tips - 提交代码：必须在本地切换为`a12_larch`分支。
+注意， 提交代码前必须在本地将对应的代码库切换为`a12_larch`分支。
 
 ```bash
 [^_^llvm-project]$ git br
@@ -141,7 +141,7 @@ Tips - 提交代码：必须在本地切换为`a12_larch`分支。
 
 
 
-# 3. Clang15 编译与回归测试
+# 3. Clang15 编译与测试
 
 ## 3.1 编译Linux版本
 
@@ -157,7 +157,7 @@ python toolchain/llvm_android/build.py --lto --pgo --bolt --no-build windows,lld
 
 ```
 
-上述编译也进行了部分回归测试（参考第三章），如下：
+上述编译脚本也进行了部分回归测试（参考第四章），如下：
 
 ```bash
 [0/955] Running libcxx tests
@@ -188,7 +188,7 @@ Testing Time: 70.62s
   Expectedly Failed:    64
 ```
 
-从脚本`builders.py`中可以看到，回归测试其实就是执行了如下脚本
+从脚本`builders.py`中可以看到，编译过程中的测试其实就是执行了如下测试脚本：
 
 ```python
 def test(self) -> None:
@@ -211,7 +211,7 @@ def test(self) -> None:
 
 #### 3.1.1 特别注意
 
-我们当前暂时禁用了部分Clang模块的编译（`toolchain/llvm_android`），这部分需要龙芯继续，最终版本还是需要这些模块。
+我们当前暂时禁用了部分可选的Clang模块（通过toolchain/llvm_android`目录下的脚本文件），这部分需要龙芯继续。
 
 ```diff
 diff --git a/do_build.py b/do_build.py
@@ -261,7 +261,7 @@ cd -
 
 
 
-# 4. Clang15 单元测试
+# 4. Clang15 测试
 
 Clang的测试分为三类：
 
@@ -309,7 +309,7 @@ cp ../../../lib/gcc/x86_64-linux/4.8.3/libgcc.a .
 # copy libgcc_s from GCC lib64 to sysroot
 cp ../../../x86_64-linux/lib64/libgcc_s.so.1 .
 
-# done, go back to riscv-llvm-src working directory
+# done, go back to src working directory
 cd -
 ```
 
@@ -637,227 +637,18 @@ Testing Time: 42.61s
 
 
 
-### 4.20 新标记失败的测试用例
 
-```bash
 
-```
-
-
-
-
-
-# 5. Clang15 测试集测试
-
-LLVM测试集即LLVM test-suite，源代码独立于llvm-project外，代码仓库位于：https://github.com/llvm/llvm-test-suite
-
- 由于编译的Android CLANG大版本号为15.0.3，因此我们采用对应的测试集为：
-
-​	https://github.com/llvm/llvm-project/releases/download/llvmorg-15.0.3/test-suite-15.0.3.src.tar.xz
-
-
-
-### 5.1 下载测试集
-
-```bash
-cd $ATOOLCHAIN_WS
-
-## 解压测试集
-tar xfJ test-suite-15.0.3.src.tar.xz
-```
-
-
-
-<span style="color:red">注意：以下测试host/qemu: 请确保执行了4.01节的脚本。</span>
-
-
-
-### 5.2 Host 测试
-
-#### 5.2.1 测试步骤
-
-```bash
-$ cd $ATOOLCHAIN_WS/
-
-$ mkdir test-suite-build-host
-$ cd test-suite-build-host
-
-## 将以下内容copy为一个文件，比如 testsuit.env.host.sh
-TEST_C=$CLANG_OUT/stage2/bin/clang
-TEST_CXX=$CLANG_OUT/stage2/bin/clang++
-TEST_FLAGS="-lstdc++ -lm"
-TEST_CONFIG="../test-suite-15.0.3.src/cmake/caches/Debug.cmake"
-TEST_LIT=$CLANG_OUT/stage2/bin/llvm-lit
-
-cmake -DCMAKE_C_COMPILER="$TEST_C" \
-        -DCMAKE_CXX_COMPILER="$TEST_CXX" \
-        -DCMAKE_C_FLAGS="$TEST_FLAGS" \
-        -DCMAKE_CXX_FLAGS="$TEST_FLAGS" \
-        -DTEST_SUITE_LIT="$TEST_LIT" \
-        -C$TEST_CONFIG \
-        -G Ninja \
-        ../test-suite-15.0.3.src
-```
-
-在`test-suite-build-host`目录下执行
-
-```bash
-## 生成ninja编译文件
-source testsuit.env.host.sh
-```
-
-
-
-#### 5.2.2 测试
-
-```bash
-## 运行测试集
-$ ninja check
-```
-
-
-
-#### 5.2.3 测试结果
-
-| 测试配置             | 编译（Pass） | 编译（Fail） | 运行（Pass） | 运行（Fail） |
-| -------------------- | :----------- | ------------ | ------------ | ------------ |
-| CodeSize.cmake（Os） | 2555         | 0            | 2498         | 0            |
-| Debug.cmake  (O0-g)  | 2555         | 0            | 2498         | 0            |
-| MinSize.cmake（Oz）  | 2555         | 0            | 2498         | 0            |
-| O0.cmake             | 2555         | 0            | 2498         | 0            |
-| O3.cmake             | 2555         | 0            | 2498         | 0            |
-| Os-g.cmake           | 2555         | 0            | 2498         | 0            |
-| OsLTO.cmake          | 2555         | 0            | 2498         | 0            |
-| Release.cmake        | 2555         | 0            | 2498         | 0            |
-| ReleaseLTO.cmake     | 2555         | 0            | 2498         | 0            |
-| ReleaseLTO-g.cmake   | 2555         | 0            | 2498         | 0            |
-| ReleaseNoLTO.cmake   | 2555         | 0            | 2498         | 0            |
-| ReleaseThinLTO.cmake | 2555         | 0            | 2498         | 0            |
-
-
-
-### 5.3 Qemu测试
-
-#### 5.3.1 环境准备
-
-环境准备的工作在某个机器上只做一次即可。
-
-```bash
-# install riscv cross compiler and binutils
-$ sudo apt install binutils-riscv64-linux-gnu cpp-riscv64-linux-gnu g++-riscv64-linux-gnu gcc-riscv64-linux-gnu
-
-# install riscv cross glibc
-$ sudo apt install libatomic1-riscv64-cross libc6-dev-riscv64-cross libc6-riscv64-cross linux-libc-dev-riscv64-cross
-
-# install riscv cross libgcc according to cross gcc version
-$ sudo apt install libgcc-8-dev-riscv64-cross libgcc1-riscv64-cross
-
-# install riscv cross libstdc++ according to cross g++ version
-$ sudo apt install libstdc++-8-dev-riscv64-cross libstdc++6-riscv64-cross
-
-# install qemu user-mode emulator
-$ sudo apt install qemu-user
-```
-
-平头哥的qemu：
-
-```bash
-## 检查 d-linux-riscv64v0p7_xthead-lp64d.so.1链接
-## /lib/ld-linux-riscv64v0p7_xthead-lp64d.so.1
-## 应该类似：
-## /lib/ld-linux-riscv64v0p7_xthead-lp64d.so.1 -> /usr/riscv64-linux-gnu/lib/ld-linux-riscv64-lp64d.so.1*
-## 当链接不存在时执行
-$ sudo ln -s /usr/riscv64-linux-gnu/lib/ld-linux-riscv64-lp64d.so.1 /lib/ld-linux-riscv64v0p7_xthead-lp64d.so.1
-
-## 检查qemu-riscv64-thead链接
-## 公司内部这个文件位于 /back/comm_back/1-android/qemu-riscv64-thead
-##    将上述文件拷贝到自己的PATH路径目录即可
-## 公司外部：这个文件就是平头哥自己编译的qemu-riscv64的软连接
-$ /data/home/wendong/.bin/qemu-riscv64-thead --version
-qemu-riscv64 version 6.0.94
-Copyright (c) 2003-2021 Fabrice Bellard and the QEMU Project developers
-```
-
-
-
-#### 5.3.2 编译
-
-```bash
-$ cd $ATOOLCHAIN_WS/
-
-$ mkdir test-suite-build-qemu
-$ cd test-suite-build-qemu
-
-## 将以下内容copy为一个文件，比如 testsuit.env.qemu.sh
-#!/bin/bash
-
-TEST_C=$CLANG_OUT/stage2-install/bin/clang
-TEST_CXX=$CLANG_OUT/stage2-install/bin/clang++
-TEST_LIT=$CLANG_OUT/stage2/bin/llvm-lit    ## Note: stage2, not stage2-install
-TEST_STRIP=$CLANG/stage2-install/bin/llvm-strip
-
-## 特别注意下面这一行需要改动： qemu-riscv64 路径
-TEST_RUN_UNDER="<path to thead qemu>/qemu-riscv64-thead -L /usr/riscv64-linux-gnu"
-
-## 此处在后续需要增加参数  -mcpu=c920
-TEST_FLAGS="-target riscv64-unknown-linux -I ./include -I/usr/riscv64-linux-gnu/include -I/usr/riscv64-linux-gnu/include/c++/9/riscv64-linux-gnu -L/usr/riscv64-linux-gnu/lib"
-
-TEST_SUITE_SRC=../test-suite-15.0.3.src
-TEST_CONFIG="$TEST_SUITE_SRC/cmake/caches/CodeSize.cmake"
-
-cmake   -DCMAKE_C_COMPILER="$TEST_C" \
-        -DCMAKE_CXX_COMPILER="$TEST_CXX" \
-        -DCMAKE_C_FLAGS="$TEST_FLAGS" \
-        -DCMAKE_CXX_FLAGS="$TEST_FLAGS" \
-        -DCMAKE_STRIP="$TEST_STRIP" \
-        -DTEST_SUITE_LIT="$TEST_LIT" \
-        -DTEST_SUITE_RUN_UNDER="$TEST_RUN_UNDER" \
-        -DTEST_SUITE_USER_MODE_EMULATION=True \
-        -C$TEST_CONFIG \
-        -G Ninja \
-        $TEST_SUITE_SRC
-```
-
-
-
-在`test-suite-build-qemu`目录下执行
-
-```bash
-## 生成ninja编译文件
-$ source testsuit.env.qemu.sh
-```
-
-
-
-#### 5.3.3 测试
-
-```bash
-## 运行测试集
-$ ninja check   ## 大概10-15分钟
-```
-
-
-
-
-
-
-
-# 6. NDK_r23
+# 5. NDK_r23
 
 通过访问以下链接可得到NDK官方文档所列的编译步骤：https://android.googlesource.com/platform/ndk/+/master/docs/Building.md
 
-### 6.1 源代码
+### 5.1 源代码
 
- <span style="color:red">如果是在已有正确测试的环境下重新执行代码打补丁、测试，则本步骤不需要做，但是需要做附录A.2 中的步骤！！！</span>
-
-<span style="color:green">如果是仅仅重新测试（代码不变），则直接进入6.2节！</span>
-
-
-
-#### 6.1.1 【内部】- 直接解压文件
+#### 5.1.1 直接解压文件
 
 ```bash
-## create a directory for building NDK
+## LA_WS 在第一节中已经定义
 $ cd $LA_WS
 
 # This command will extract all files to ndk23/
@@ -873,10 +664,9 @@ $ repo sync
 
 
 
-#### 6.1.2 从github下载源代码
+#### 5.1.2 从github下载源代码
 
 ```bash
-## create a directory for building NDK
 $ cd $LA_WS
 $ mkdir ndk23 && cd ndk23
 
@@ -889,16 +679,16 @@ $ repo sync -c
 
 
 
-### 6.2 编译前设置
+### 5.2 编译前设置
 
-#### 6.2.2  切换Clang到新编译的15.0.3
+#### 5.2.1  切换Clang到新编译的15.0.3
 
 ```bash
 ## Linux
 cd $LA_WS/ndk23/prebuilts/clang/host/linux-x86
 ln -s ../../../../../clang-15.0.3/out/install/linux-x86/clang-r468909b  clang-r468909b  ##!!
 ## ！！此处一定不能使用绝对路径进行ln -s操作，否则会导致编译失败！！
-## 只有使用相对路径ln，或者直接copy
+## 只能使用相对路径ln，或者直接copy
 
 ## fix symbol links for builind NDK tests
 cd $LA_WS/ndk23/prebuilts/clang/host/linux-x86/clang-r468909b/lib/x86_64-unknown-linux-gnu
@@ -909,7 +699,7 @@ ln -s libc++abi.so.1 libc++abi.so.1.0
 
 
 
-#### 6.2.3 切换Python到Clang 15.0.3中的Python3
+#### 5.2.2 切换Python到Clang 15.0.3中的Python3
 
 ```bash
 cd $LA_WS/ndk23/prebuilts
@@ -921,11 +711,11 @@ ln -s linux-x86 linux
 cd $LA_WS/ndk23
 ```
 
-以上命令可以copy到一个脚本文件中，用source的方式执行。
+以上命令可以拷贝到一个脚本文件中，用source的方式执行。
 
 
 
-### 6.3 编译、打包以及测试
+### 5.3 编译、打包以及测试
 
 其中本部分的测试需要进一步修订
 
@@ -935,12 +725,12 @@ cd $LA_WS/ndk23
 ## 编译Linux版本
 unset OUT_DIR
 
-## 根据机器的性能确定xx数字：2,8,16等
+## 根据机器的性能确定并行 xx 数字，如：2,8,16等
 python ndk/checkbuild.py -j2  --package  --no-build-tests  --system linux --build-number 23
 # python ndk/checkbuild.py -j2 --package --system linux --build-number 23
 
 
-## 结果应该显示 -- TODO
+## 结果应该显示
 build: PASS 892/1000     FAIL 0/1000  SKIP 108/1000
 device: PASS 330/355     FAIL 0/355   SKIP 25/355
 libc++: PASS 31380/31380 FAIL 0/31380 SKIP 0/31380
@@ -952,42 +742,9 @@ PASS 32602/32735         FAIL 0/32735 SKIP 133/32735
 
 
 
+# 6. Rust
 
-### 6.4 Device上测试 - TODO
-
-NDK 测试作为NDK正常构建的一部分（使用 checkbuild.py）并通过 run_tests.py 运行。
-
-```bash
-# Build the NDK and tests
-# ndk/checkbuild.py
-
-cd $ATOOLCHAIN_WS/ndk23
-
-export ANDROID_SERIAL=1234567890
-
-##strip exe files
-cp $ATOOLCHAIN_WS/aosp12-clang15-patch/ndk-r23/strip_exe.sh .
-bash strip_exe.sh out
-
-## copy test config file
-cd out
-cp $ATOOLCHAIN_WS/aosp12-clang15-patch/ndk-r23/qa_config_thead.json .
-
-unset OUT_DIR
-python ../ndk/run_tests.py --abi riscv64 --clean-device --config qa_config_thead.json | tee test_log.txt
-
-
-```
-
-
-
-# 7. Rust
-
-###  7.1 源代码
-
-#### 7.1.1 【内部】- 直接解压文件
-
-#### 7.1.2 从github下载源代码
+###  6.1 源代码
 
 ```shell
 $ cd $LA_WS
@@ -998,7 +755,7 @@ git clone -b a12_larch git@github.com:android-la64/rust.git && cd rust
 
 
 
-### 7.2 编译前设置
+### 6.2 编译前设置
 
 #### 7.2.1 配置工具链
 
@@ -1016,7 +773,7 @@ export NDK_PATH=/data5/yuanjian/loongson/ndk23/out/linux/android-ndk-r23c
 
 
 
-### 7.3 编译、打包
+### 6.3 编译、打包
 
 ```shell
 ## 进入rust目录
@@ -1040,56 +797,9 @@ ls -lh build/dist/rust-src-android.tar.xz
 
 
 
-# A. 内部测试用的额外步骤
-
-本章描述的步骤只用于<span style="color:red">熵核</span>内部测试人员反复进行clang、ndk测试时使用。
 
 
-
-### A.1 Clang测试
-
-这个步骤只是为了将跳过  <span style="color:red">2.1</span> 节的步骤 - 节省测试时间（不删除out.rv，节约编译时间）。
-
-```bash
-$ cd $ATOOLCHAIN_WS/clang_la
-$ rm -rf bionic*
-
-## 恢复到2.1节之后的初始状态
-$ repo sync -l -c
-
-    toolchain/llvm-project/: discarding 32 commits
-    toolchain/llvm_android/: discarding 2 commits
-    Checking out: 100% (27/27), done in 55.002s
-    repo sync has finished successfully.
-
-## 之后就可以从2.2节开始
-```
-
-
-
-### A.2 NDK测试
-
-这个步骤只是为了将跳过  <span style="color:red">6.1</span> 节的步骤 - 节省测试时间。
-
-```bash
-cd $ATOOLCHAIN_WS/ndk23
-
-## 恢复到6.1节之后的初始状态
-rm -rf bionic*
-
-cd $ATOOLCHAIN_WS/ndk23/prebuilts
-rm -rf python3
-mv python3-ori python3
-
-cd -
-repo sync -l -c
-
-## 之后就可以从6.2节开始
-```
-
-
-
-# B. 参考
+# A. 参考
 
 1. Clang15 Release notes： https://releases.llvm.org/15.0.0/tools/clang/docs/index.html
 2. Android Clang build doc: https://android.googlesource.com/toolchain/llvm_android/
