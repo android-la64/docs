@@ -472,6 +472,32 @@ $ adb shell settings put system user_rotation 1   ## 0, 1,2,3
 
 
 
+# 5. QEMU运行
+
+有时候，简单运行Android或者进行简单调试，QEMU是更方便的方式。
+
+有2中方式以模拟器方式完整运行Android：
+
+1. emulator：以qemu的早期分支为基础，已经不再更新。如果需要这种方式运行，需要将qemu的新版本移植到AOSP适用的方式。
+2. cutfish：从2018年，新采用的Android运行方式，可以以upstream版本的qemu为基础运行（通过参数 `-vm_manager`控制）
+   1. use upstream Kernel/QEMU
+   2. use virtio devices
+   3. leverage kvm for acceleration (thus, it’s only available on Linux)
+   4. adapted for cloud environment
+
+由于CF模式，在本次移植中为涉及到，我们在此不再详述，可以参考：
+
+	1. https://lpc.events/event/2/contributions/269/attachments/56/63/Kernel_Hacking_with_Cuttlefish.pdf
+	1. https://source.android.com/docs/devices/cuttlefish
+
+
+
+因此，目前采用QEMU主要是初期以Command line 运行方式的，具体可以参考[04号文件](./04-debug.md) 
+
+
+
+
+
 # A. 硬件描述
 
 本节主要描述机器硬盘以及对应的fstab处理，GPU信息等内容。
@@ -873,30 +899,14 @@ adb shell start
 ### C.3 DUMP OAT文件
 
 ```bash
-$ adb shell "oatdump --oat-file=/system/framework/riscv64/boot-framework.oat" > boot-framework.dump
+$ adb shell "oatdump --oat-file=/system/framework/xxx/boot-framework.oat" > boot-framework.dump
 ```
 
 
 
 
 
-### C.4 QEMU编译
-
-```bash
-repo init -u git@github.com:riscv-android-src/manifest.git -b emu-31.2.1.0-riscv64
-repo sync
-cd external/qemu/
-./android/rebuild.sh
-ls objs/distribution/
-
-./android/rebuild.sh  --enable-debug --enable-debug-info  --enable-debug-stack-usage
-```
-
-
-
-
-
-### C.5 模拟器常用命令
+### C.4 模拟器常用命令
 
 ```bash
 $ emulator -help-datadir

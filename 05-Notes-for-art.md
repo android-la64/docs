@@ -1,20 +1,5 @@
 
 
-
-
-## 注意!!!： 3A5000安卓内核
-
-目前模拟器使用的安卓内核理论上可以直接用于3A5000真机，但是实际有两个问题需要处理：
-
-2. 真机的radeon显卡驱动需要加载一些固件，由于android.img没有内置这些文件，需要处理。一种办法是内置到内核，配置内核(Device Drivers/Generic Driver Options/Firmware Loader/Firmware blobs root directory和firmware loading facility),参考配置如下（根据显卡型号不同内置文件也不同）。另一种办法是将linux /lib/firmware目录下相关文件加入ramdisk.img. 
-
-```bash
-CONFIG_EXTRA_FIRMWARE="radeon/oland_pfp.bin radeon/oland_me.bin radeon/oland_smc.bin radeon/oland_ce.bin radeon/oland_rlc.bin radeon/oland_mc.bin radeon/oland_k_smc.bin"
-CONFIG_EXTRA_FIRMWARE_DIR="/lib/firmware"
-```
-
-
-
 # 1. 注意事项
 
 1. 安装应用：大部分带有so文件的APK安装文件不能安装在本系统中（so文件往往会带有架构相关的代码）
@@ -89,3 +74,17 @@ CONFIG_EXTRA_FIRMWARE_DIR="/lib/firmware"
    ```
 
    
+
+
+
+## 注意!!!： 3A5000安卓内核
+
+目前模拟器使用的安卓内核理论上可以直接用于3A5000真机，但是实际有两个问题需要处理：
+
+2. 真机的radeon显卡驱动需要加载一些固件，由于android.img没有内置这些文件，需要处理。一种办法是内置到内核，配置内核(Device Drivers/Generic Driver Options/Firmware Loader/Firmware blobs root directory和firmware loading facility),参考配置如下（根据显卡型号不同内置文件也不同）。另一种办法是将linux /lib/firmware目录下相关文件加入ramdisk.img. 
+
+```bash
+CONFIG_EXTRA_FIRMWARE="radeon/oland_pfp.bin radeon/oland_me.bin radeon/oland_smc.bin radeon/oland_ce.bin radeon/oland_rlc.bin radeon/oland_mc.bin radeon/oland_k_smc.bin"
+CONFIG_EXTRA_FIRMWARE_DIR="/lib/firmware"
+```
+
