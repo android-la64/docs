@@ -130,7 +130,7 @@ update: 2024.10.14, 目前的做法生成ndk时，由于clang-r530567b下边有�
 
 ```bash
 cd ndk
-../prebuilt/python/linux-x86/bin/python3 ./checkbuild.py --package  --no-build-tests  --system linux --build-number 27
+../prebuilts/python/linux-x86/bin/python3 ./checkbuild.py --package  --no-build-tests  --system linux --build-number 27
 ```
 
 如有异常，也可以按照官方的说明安装好python poetry环境，然后在poetry shell中运行相应命令。
@@ -225,4 +225,4 @@ ndk应该指向上一节生成的带LA支持的ndk。
 3. rust-toolchain.
  repo init -u ssh://git@github.com/android-la64/manifest -b rust-toolchain-larch
 4. aosp15.
- repo init -u ssh://git@github.com/android-la64/manifest -b a15-larch
+ repo init -u ssh://git@github.com/android-la64/manifest -b a15_larch
