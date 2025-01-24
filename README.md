@@ -19,7 +19,7 @@
 ├── toolchain-ABI2.md					:  build toolchain for ABI version 2
 ```
 
-其中01-05开头的文档针对AOSP12编写。toolchain-ABI2.md针对AOSP15.
+其中01-05开头的文档针对AOSP12编写， AOSP15可以参考。toolchain-ABI2.md针对AOSP15.
 
 ## 编译运行
 
@@ -52,11 +52,11 @@ m
 
 ### 运行
 
-安卓的运行可以参考[安卓运行环境参考](ssh://git@8.140.33.210:2222/android/android_qemu_env.git)。其中aosp15目录下的内容是运行aosp15所需要的一些脚本、内核二进制等。
+安卓的运行可以参考[这个文档](http://8.140.33.210:2280/android/android_qemu_env)。其中aosp15目录下的内容是运行aosp15所需要的一些脚本、内核二进制等。
 
 ## 内核
 
-内核源码位于[内核仓库](git@github.com:android-la64/kernel_common.git)，缺省配置文件参见上述安卓运行环境参考仓库。
+内核源码位于[内核仓库](git@github.com:android-la64/kernel_common.git)，缺省配置文件参见上述仓库。
 
 ## TODO
 
